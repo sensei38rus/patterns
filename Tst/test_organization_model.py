@@ -1,102 +1,114 @@
 import pytest
-from Src.Core.exception import argument_exception, max_length_exception
-from Src.Models.range_model import range_model
-from Src.Models.nomenclature_group_model import nomenclature_group_model
-from Src.Models.nomenclature_model import nomenclature_model
+from Src.Core.exception import argument_exception
+from Src.Models.organization_model import organization_model
 
 
-def test_success_nomenclature_model_full_creation():
+def test_success_organization_model_inn_10_digits():
     """
-    Ожидание: Успешное создание номенклатуры с полным набором параметров.
-    Метод: nomenclature_model.__init__
-    Описание: Номенклатура создаётся с кратким именем, полным именем, группой и единицей измерения.
+    Ожидание: Успешное создание организации с 10-значным ИНН (юридическое лицо).
+    Метод: organization_model.__init__
+    Описание: ООО Ромашка с корректным набором реквизитов создаётся без ошибок.
     """
-    # Arrange (Подготовка)
-    gram = range_model("грамм", 1)
-    group = nomenclature_group_model("Мясо")
-
-    # Act (Действие)
-    item = nomenclature_model("Говядина", "Говядина охлаждённая, вырезка", group, gram)
+    # Arrange & Act (Подготовка и Действие)
+    org = organization_model("Ромашка", "1234567890", "044525225", "40702810938000012345", "ООО")
 
     # Assert (Проверка)
-    assert item.name == "Говядина"
-    assert item.full_name == "Говядина охлаждённая, вырезка"
-    assert item.group is group
-    assert item.range is gram
+    assert org.name == "Ромашка"
+    assert org.inn == "1234567890"
+    assert org.bik == "044525225"
+    assert org.account == "40702810938000012345"
+    assert org.ownership_form == "ООО"
 
 
-def test_success_nomenclature_model_boundary_255_full_name():
+def test_success_organization_model_inn_12_digits():
     """
-    Ожидание: Успешное создание номенклатуры с полным именем ровно в 255 символов.
-    Метод: nomenclature_model.full_name (setter)
-    Описание: Граничное значение — полное наименование ровно в 255 символов допустимо.
+    Ожидание: Успешное создание организации с 12-значным ИНН (индивидуальный предприниматель).
+    Метод: organization_model.__init__
+    Описание: ИП с 12-значным ИНН создаётся без ошибок.
     """
-    # Arrange (Подготовка)
-    gram = range_model("грамм", 1)
-    group = nomenclature_group_model("Мясо")
-    long_full_name = "А" * 255
-
-    # Act (Действие)
-    item = nomenclature_model("Говядина", long_full_name, group, gram)
+    # Arrange & Act (Подготовка и Действие)
+    org = organization_model("Иванов", "123456789012", "044525225", "40802810938000012345", "ИП")
 
     # Assert (Проверка)
-    assert len(item.full_name) == 255
+    assert org.inn == "123456789012"
+    assert org.ownership_form == "ИП"
 
 
-def test_argument_exception_nomenclature_model_full_name_too_long():
+def test_argument_exception_organization_model_invalid_inn_length():
     """
-    Ожидание: Выброс max_length_exception при полном наименовании длиннее 255 символов.
-    Метод: nomenclature_model.full_name (setter)
-    Описание: Полное наименование номенклатуры ограничено 255 символами (п. 7 ТЗ).
+    Ожидание: Выброс argument_exception при некорректной длине ИНН (не 10 и не 12).
+    Метод: organization_model.inn (setter)
+    Описание: ИНН длиной 8 цифр не соответствует стандарту РФ.
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", "12345678", "044525225", "40702810938000012345", "ООО")
+
+
+def test_argument_exception_organization_model_inn_with_letters():
+    """
+    Ожидание: Выброс argument_exception при наличии букв в ИНН.
+    Метод: organization_model.inn (setter)
+    Описание: ИНН должен содержать только цифры, буквы недопустимы.
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", "123456789A", "044525225", "40702810938000012345", "ООО")
+
+
+def test_argument_exception_organization_model_inn_as_int():
+    """
+    Ожидание: Выброс argument_exception при передаче ИНН как числа int.
+    Метод: organization_model.inn (setter)
+    Описание: ИНН должен быть строкой, а не числом (ведущие нули теряются в числовом типе).
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", 1234567890, "044525225", "40702810938000012345", "ООО")
+
+
+def test_argument_exception_organization_model_invalid_bik():
+    """
+    Ожидание: Выброс argument_exception при некорректной длине БИК.
+    Метод: organization_model.bik (setter)
+    Описание: БИК должен содержать ровно 9 цифр, 7 цифр — это ошибка.
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", "1234567890", "1234567", "40702810938000012345", "ООО")
+
+
+def test_argument_exception_organization_model_invalid_account():
+    """
+    Ожидание: Выброс argument_exception при некорректной длине счёта.
+    Метод: organization_model.account (setter)
+    Описание: Расчётный счёт должен содержать ровно 20 цифр.
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", "1234567890", "044525225", "12345", "ООО")
+
+
+def test_argument_exception_organization_model_long_ownership_form():
+    """
+    Ожидание: Выброс argument_exception при форме собственности длиннее 5 символов.
+    Метод: organization_model.ownership_form (setter)
+    Описание: Форма собственности — краткая аббревиатура, максимум 5 символов.
+    """
+    # Arrange, Act & Assert (Подготовка, Действие и Проверка)
+    with pytest.raises(argument_exception):
+        organization_model("Ромашка", "1234567890", "044525225", "40702810938000012345", "ДЛИННАЯ")
+
+
+def test_argument_exception_organization_model_setter_invalid_bik():
+    """
+    Ожидание: Выброс argument_exception при изменении БИК на невалидный через сеттер.
+    Метод: organization_model.bik (setter)
+    Описание: Валидация срабатывает не только при создании, но и при последующем изменении поля.
     """
     # Arrange (Подготовка)
-    gram = range_model("грамм", 1)
-    group = nomenclature_group_model("Мясо")
-    too_long_name = "А" * 256
-
-    # Act & Assert (Действие и Проверка)
-    with pytest.raises(max_length_exception):
-        nomenclature_model("Говядина", too_long_name, group, gram)
-
-
-def test_argument_exception_nomenclature_model_empty_full_name():
-    """
-    Ожидание: Выброс argument_exception при пустом полном наименовании.
-    Метод: nomenclature_model.full_name (setter)
-    Описание: Полное наименование номенклатуры не может быть пустой строкой.
-    """
-    # Arrange (Подготовка)
-    gram = range_model("грамм", 1)
-    group = nomenclature_group_model("Мясо")
+    org = organization_model("Ромашка", "1234567890", "044525225", "40702810938000012345", "ООО")
 
     # Act & Assert (Действие и Проверка)
     with pytest.raises(argument_exception):
-        nomenclature_model("Говядина", "", group, gram)
-
-
-def test_argument_exception_nomenclature_model_invalid_group_type():
-    """
-    Ожидание: Выброс argument_exception при передаче строки вместо объекта группы.
-    Метод: nomenclature_model.group (setter)
-    Описание: Поле group должно быть экземпляром nomenclature_group_model, а не строкой (п. 8 ТЗ).
-    """
-    # Arrange (Подготовка)
-    gram = range_model("грамм", 1)
-
-    # Act & Assert (Действие и Проверка)
-    with pytest.raises(argument_exception):
-        nomenclature_model("Говядина", "Говядина полное", "Мясо", gram)
-
-
-def test_argument_exception_nomenclature_model_invalid_range_type():
-    """
-    Ожидание: Выброс argument_exception при передаче строки вместо объекта единицы измерения.
-    Метод: nomenclature_model.range (setter)
-    Описание: Поле range должно быть экземпляром range_model, а не строкой (п. 8 ТЗ).
-    """
-    # Arrange (Подготовка)
-    group = nomenclature_group_model("Мясо")
-
-    # Act & Assert (Действие и Проверка)
-    with pytest.raises(argument_exception):
-        nomenclature_model("Говядина", "Говядина полное", group, "грамм")
+        org.bik = "123"
