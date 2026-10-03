@@ -1,8 +1,8 @@
-from Src.Core.abstract_model import name_id
+from Src.Core.abstract_model import abs_mod
 from Src.Core.exception import argument_exception
 
 
-class organization_model(name_id):
+class organization_model(abs_mod):
     """
     Модель организации (юридического лица).
     Содержит реквизиты: ИНН, БИК, расчётный счёт, форму собственности.

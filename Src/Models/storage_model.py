@@ -1,8 +1,8 @@
-from Src.Core.abstract_model import name_id
+from Src.Core.abstract_model import abs_mod
 from Src.Core.exception import argument_exception
 
 
-class storage_model(name_id):
+class storage_model(abs_mod):
     """
     Модель склада.
     Место хранения запасов продуктов и заготовок (например, "Основной склад", "Холодильник цеха").

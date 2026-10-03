@@ -1,10 +1,10 @@
-from Src.Core.abstract_model import name_id
+from Src.Core.abstract_model import abs_mod
 from Src.Core.exception import argument_exception, max_length_exception
 from Src.Models.range_model import range_model
 from Src.Models.nomenclature_group_model import nomenclature_group_model
 
 
-class nomenclature_model(name_id):
+class nomenclature_model(abs_mod):
     """
     Модель номенклатуры.
     Позиция учёта с кратким и полным наименованием, группой и единицей измерения.

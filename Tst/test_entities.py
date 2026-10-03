@@ -1,19 +1,19 @@
 import pytest
-from Src.Core.abstract_model import name_id
+from Src.Core.abstract_model import abs_mod
 from Src.Core.exception import argument_exception
 
 
-class test_entity(name_id):
+class test_entity(abs_mod):
     """
-    Тестовая сущность, наследующая базовый класс name_id для проверки его функциональности.
+    Тестовая сущность, наследующая базовый класс abs_mod для проверки его функциональности.
     """
     pass
 
 
-def test_not_none_name_id_get_id_not_null():
+def test_not_none_model_get_id_not_null():
     """
     Ожидание: Идентификатор id не равен None при создании сущности.
-    Метод: name_id.id (getter)
+    Метод: abs_mod.id (getter)
     Описание: Проверяет, что при инициализации объекта свойство id автоматически заполняется и не равно None.
     """
     # Arrange (Подготовка)
@@ -26,10 +26,10 @@ def test_not_none_name_id_get_id_not_null():
     assert result is not None
 
 
-def test_not_equal_name_id_id_different_instances():
+def test_not_equal_model_id_different_instances():
     """
     Ожидание: Идентификаторы двух разных сущностей не равны.
-    Метод: name_id.id (getter)
+    Метод: abs_mod.id (getter)
     Описание: Проверяет уникальность автоматически сгенерированных идентификаторов для разных экземпляров сущности.
  
     """
@@ -41,10 +41,10 @@ def test_not_equal_name_id_id_different_instances():
     assert entity1.id != entity2.id
 
 
-def test_equal_name_id_compare_by_same_id():
+def test_equal_model_compare_by_same_id():
     """
     Ожидание: Две сущности равны при совпадении их идентификаторов id.
-    Метод: name_id.__eq__
+    Метод: abs_mod.__eq__
     Описание: Проверяет сравнение сущностей: если их id совпадают, оператор равенства возвращает True,
               даже если это разные объекты в памяти.
     """
@@ -63,10 +63,10 @@ def test_equal_name_id_compare_by_same_id():
     assert id(entity1) != id(entity2)
 
 
-def test_argument_exception_name_id_set_name_empty_value():
+def test_argument_exception_model_set_name_empty_value():
     """
     Ожидание: Выброс пользовательского исключения argument_exception при пустом имени.
-    Метод: name_id.name (setter)
+    Метод: abs_mod.name (setter)
     Описание: Проверяет, что сеттер свойства name выбрасывает именно argument_exception,
               а также проверяет заполненность полей field и message в объекте исключения.
     """
@@ -78,10 +78,10 @@ def test_argument_exception_name_id_set_name_empty_value():
         entity.name = ""
 
 
-def test_argument_exception_name_id_set_name_none_value():
+def test_argument_exception_model_set_name_none_value():
     """
     Ожидание: Выброс пользовательского исключения argument_exception при значении None.
-    Метод: name_id.name (setter)
+    Метод: abs_mod.name (setter)
     Описание: Проверяет выброс argument_exception при передаче None в сеттер name.
     """
     # Arrange (Подготовка)

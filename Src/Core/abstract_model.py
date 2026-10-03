@@ -3,7 +3,7 @@ import uuid
 from Src.Core.exception import argument_exception, max_length_exception
 
 
-class name_id(ABC):
+class abs_mod(ABC):
     """
     Абстрактный базовый класс для сущностей, обладающих наименованием и уникальным идентификатором.
     """
@@ -61,6 +61,6 @@ class name_id(ABC):
         """
         Сравнение двух сущностей по их идентификатору.
         """
-        if isinstance(other, name_id):
+        if isinstance(other, abs_mod):
             return str(self.id) == str(other.id)
         return False

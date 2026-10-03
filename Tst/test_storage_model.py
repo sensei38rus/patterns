@@ -46,7 +46,7 @@ def test_argument_exception_storage_model_invalid_address_type():
 def test_argument_exception_storage_model_empty_name():
     """
     Ожидание: Выброс argument_exception при пустом имени склада.
-    Метод: storage_model.name (setter, наследован от name_id)
+    Метод: storage_model.name (setter, наследован от abs_mod)
     Описание: Имя склада не может быть пустой строкой.
     """
     # Arrange, Act & Assert (Подготовка, Действие и Проверка)
@@ -57,7 +57,7 @@ def test_argument_exception_storage_model_empty_name():
 def test_argument_exception_storage_model_whitespace_name():
     """
     Ожидание: Выброс argument_exception при имени из одних пробелов.
-    Метод: storage_model.name (setter, наследован от name_id)
+    Метод: storage_model.name (setter, наследован от abs_mod)
     Описание: Строка только из пробелов обрезается (strip) и считается пустой.
     """
     # Arrange, Act & Assert (Подготовка, Действие и Проверка)
@@ -68,7 +68,7 @@ def test_argument_exception_storage_model_whitespace_name():
 def test_false_eq_storage_model_compare_with_string():
     """
     Ожидание: Сравнение модели со строкой возвращает False без ошибки.
-    Метод: name_id.__eq__
+    Метод: abs_mod.__eq__
     Описание: Оператор == не должен падать при сравнении сущности с объектом другого типа.
     """
     # Arrange (Подготовка)
@@ -82,7 +82,7 @@ def test_false_eq_storage_model_compare_with_string():
 def test_false_eq_storage_model_same_name_different_id():
     """
     Ожидание: Два склада с одинаковым именем, но разными ID — не равны.
-    Метод: name_id.__eq__
+    Метод: abs_mod.__eq__
     Описание: Сущности сравниваются по id, а не по значению name.
     """
     # Arrange (Подготовка)

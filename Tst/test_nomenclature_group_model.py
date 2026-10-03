@@ -20,7 +20,7 @@ def test_success_nomenclature_group_model_creation():
 def test_argument_exception_nomenclature_group_model_long_name():
     """
     Ожидание: Выброс max_length_exception при имени длиннее 50 символов.
-    Метод: nomenclature_group_model.name (setter, наследован от name_id)
+    Метод: nomenclature_group_model.name (setter, наследован от abs_mod)
     Описание: Наименование группы ограничено 50 символами (п. 9 ТЗ).
     """
     # Arrange (Подготовка)
@@ -34,7 +34,7 @@ def test_argument_exception_nomenclature_group_model_long_name():
 def test_success_nomenclature_group_model_boundary_50_chars():
     """
     Ожидание: Успешное создание группы с именем ровно в 50 символов.
-    Метод: nomenclature_group_model.name (setter, наследован от name_id)
+    Метод: nomenclature_group_model.name (setter, наследован от abs_mod)
     Описание: Граничное значение — имя ровно в 50 символов допустимо.
     """
     # Arrange (Подготовка)

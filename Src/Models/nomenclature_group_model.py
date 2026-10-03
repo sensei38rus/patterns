@@ -1,7 +1,7 @@
-from Src.Core.abstract_model import name_id
+from Src.Core.abstract_model import abs_mod
 
 
-class nomenclature_group_model(name_id):
+class nomenclature_group_model(abs_mod):
     """
     Модель группы номенклатуры.
     Категория для объединения позиций номенклатуры (например, "Мясо", "Овощи", "Молочные продукты").
