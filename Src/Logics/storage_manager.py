@@ -76,48 +76,40 @@ class storage_manager(abstract_manager):
             self.add_range(r)
 
     def __create_groups(self) -> None:
-        """Генерация групп номенклатуры под технологическую карту."""
-        grocery = nomenclature_group_model(name="Бакалея")
-        dairy = nomenclature_group_model(name="Молочные продукты")
-        dishes = nomenclature_group_model(name="Блюда")
-
-        self.add_group(grocery)
-        self.add_group(dairy)
-        self.add_group(dishes)
+        """Генерация групп номенклатуры через фабричные методы nomenclature_group_model."""
+        for group in (
+            nomenclature_group_model.create_grocery(),
+            nomenclature_group_model.create_dairy(),
+            nomenclature_group_model.create_dishes(),
+            nomenclature_group_model.create_packaging(),
+        ):
+            self.add_group(group)
 
     def __create_nomenclatures(self) -> None:
-        """Генерация номенклатуры (ингредиенты для рецепта и готовые блюда)."""
+        """Генерация номенклатуры через фабричные методы nomenclature_model."""
         groups_by_name = {g.name: g for g in self._groups.values()}
         ranges_by_name = {r.name: r for r in self._ranges.values()}
 
-        grocery = groups_by_name.get("Бакалея")
-        dairy = groups_by_name.get("Молочные продукты")
-        dishes = groups_by_name.get("Блюда")
-
-        kg = ranges_by_name.get("килограмм")
-        liter = ranges_by_name.get("литр")
-        piece = ranges_by_name.get("штука")
-
         items = [
-            nomenclature_model("Мука пшеничная", "Мука пшеничная высший сорт", grocery, kg),
-            nomenclature_model("Молоко 3.2%", "Молоко коровье пастеризованное 3.2%", dairy, liter),
-            nomenclature_model("Яйца куриные", "Яйца куриные столовые С0", dairy, piece),
-            nomenclature_model("Масло сливочное", "Масло сливочное крестьянское 72.5%", dairy, kg),
-            nomenclature_model("Сахар", "Сахар белый кристаллический", grocery, kg),
-            nomenclature_model("Соль", "Соль поваренная пищевая", grocery, kg),
-            nomenclature_model("Блины классические", "Блины классические тонкие", dishes, piece),
+            nomenclature_model.create_flour(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
+            nomenclature_model.create_milk(groups_by_name.get("Молочные продукты"), ranges_by_name.get("литр")),
+            nomenclature_model.create_eggs(groups_by_name.get("Молочные продукты"), ranges_by_name.get("штука")),
+            nomenclature_model.create_butter(groups_by_name.get("Молочные продукты"), ranges_by_name.get("килограмм")),
+            nomenclature_model.create_sugar(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
+            nomenclature_model.create_salt(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
+            nomenclature_model.create_cottage_cheese(groups_by_name.get("Молочные продукты"), ranges_by_name.get("килограмм")),
+            nomenclature_model.create_sunflower_oil(groups_by_name.get("Бакалея"), ranges_by_name.get("литр")),
+            nomenclature_model.create_breakfast_box(groups_by_name.get("Упаковка"), ranges_by_name.get("штука")),
+            nomenclature_model.create_pancakes(groups_by_name.get("Блюда"), ranges_by_name.get("штука")),
         ]
 
         for item in items:
             self.add_nomenclature(item)
 
     def __create_storages(self) -> None:
-        """Генерация складов."""
-        main_storage = storage_model(name="Основной склад", address="ул. Промышленная, 5, пом. 101")
-        fridge = storage_model(name="Холодильник цеха", address="ул. Промышленная, 5, пом. 102")
-
-        self.add_storage(main_storage)
-        self.add_storage(fridge)
+        """Генерация складов через фабричные методы storage_model."""
+        self.add_storage(storage_model.create_main_storage())
+        self.add_storage(storage_model.create_fridge())
 
     def add_storage(self, item: storage_model) -> bool:
         """Добавить склад. Возвращает True, если добавлен; False, если дубликат или неверный тип."""
