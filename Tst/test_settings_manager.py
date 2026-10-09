@@ -136,9 +136,9 @@ def test_success_settings_manager_convert_organization_fields():
     org = manager.settings.organization
     assert isinstance(org, organization_model)
     assert org.name == "Ромашка"
-    assert org.inn == "1111112222"
-    assert org.bik == "234243423"
-    assert org.account == "12345678901234567890"
+    assert org.inn == "7736050003"
+    assert org.bik == "044525225"
+    assert org.account == "40702810400000000001"
     assert org.ownership_form == "ООО"
 
 
@@ -156,7 +156,7 @@ def test_success_settings_manager_convert_boss_and_accountant():
 
     # Проверки
     assert manager.settings.boss_name == "Иванов Иван Иванович"
-    assert manager.settings.account_name == "Криштиану Роналду"
+    assert manager.settings.account_name == "Петрова Анна Сергеевна"
 
 
 def test_true_settings_manager_is_first_start():
@@ -206,7 +206,7 @@ def test_not_raise_settings_manager_convert_empty_organization_name():
     manager._settings_manager__data = {
         "organization": {
             "name": "   ",
-            "inn": "1111112222"
+            "inn": "7736050003"
         },
         "boss_name": "Иванов Иван",
         "is_first_start": True
@@ -219,3 +219,71 @@ def test_not_raise_settings_manager_convert_empty_organization_name():
     assert result == True
     assert manager.settings.boss_name == "Иванов Иван"
     assert manager.settings.is_first_start == True
+
+
+def test_true_settings_manager_build():
+    """
+    Ожидание: Метод build() возвращает True после загрузки.
+    Метод: settings_manager.build
+    Описание: Проверяет сборку настроек через метод build() с использованием интроспекции полей.
+    """
+    # Подготовка
+    manager = settings_manager()
+    manager.load()
+
+    # Действие
+    result = manager.build()
+
+    # Проверки
+    assert result == True
+
+
+def test_success_settings_manager_load_flat_format():
+    """
+    Ожидание: Корректная загрузка настроек из плоского формата c префиксами полей (company_name).
+    Метод: settings_manager.load
+    Описание: Проверяет работу интроспекции через common.get_fields для плоских ключей из Tst/settings.json.
+    """
+    # Подготовка
+    manager = settings_manager()
+
+    # Действие
+    manager.load("settings.json")
+
+    # Проверки
+    assert manager.is_loaded == True
+    assert manager.settings.organization.name == "Ромашка"
+    assert manager.settings.boss_name == "Иванов Иван Иванович"
+    assert manager.settings.first_start == manager.settings.is_first_start
+
+
+def test_success_settings_manager_create_killogramm():
+    """
+    Ожидание: Фабричный метод create_killogramm возвращает объект range_model со свойствами килограмма.
+    Метод: settings_manager.create_killogramm
+    Описание: Проверяет работу фабричного метода создания килограмма через settings_manager.
+    """
+    # Act
+    kg = settings_manager.create_killogramm()
+
+    # Assert
+    assert kg.name == "Килограмм"
+    assert kg.value == 1000
+    assert kg.base is not None
+    assert kg.base.name == "Грамм"
+
+
+def test_success_settings_manager_create_kilogram():
+    """
+    Ожидание: Фабричный метод create_kilogram возвращает объект range_model со свойствами килограмма.
+    Метод: settings_manager.create_kilogram
+    Описание: Проверяет работу фабричного метода create_kilogram через settings_manager.
+    """
+    # Act
+    kg = settings_manager.create_kilogram()
+
+    # Assert
+    assert kg.name == "килограмм"
+    assert kg.value == 1000
+    assert kg.base is not None
+    assert kg.base.name == "грамм"

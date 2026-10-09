@@ -16,6 +16,7 @@ from Src.Models.settings_model import settings_model
 # 1. Проверка шаблона Singleton
 
 
+
 def test_same_instance_storage_manager_singleton():
     """
     Ожидание: Два вызова возвращают один и тот же объект в памяти.
@@ -326,8 +327,8 @@ def test_empty_storage_manager_convert_is_first_start_false():
               не выполняется, все коллекции остаются пустыми.
     """
     # Подготовка
-    if hasattr(storage_manager, '_instance'):
-        del storage_manager._instance
+    if hasattr(storage_manager, 'instance'):
+        del storage_manager.instance
 
     custom_settings = settings_model()
     custom_settings.is_first_start = False
@@ -344,5 +345,5 @@ def test_empty_storage_manager_convert_is_first_start_false():
         assert len(manager.nomenclatures) == 0
         assert len(manager.storages) == 0
     finally:
-        if hasattr(storage_manager, '_instance'):
-            del storage_manager._instance
+        if hasattr(storage_manager, 'instance'):
+            del storage_manager.instance

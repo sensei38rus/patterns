@@ -1,15 +1,15 @@
 from Src.Core.abstract_manager import abstract_manager
 from Src.Core.validator import validator
 from Src.Logics.settings_manager import settings_manager
-from Src.Models.nomenclature_group_model import nomenclature_group_model
-from Src.Models.nomenclature_model import nomenclature_model
-from Src.Models.range_model import range_model
 from Src.Models.storage_model import storage_model
+from Src.Models.range_model import range_model
+from Src.Models.nomenclature_model import nomenclature_model
+from Src.Models.nomenclature_group_model import nomenclature_group_model
 
 
 class storage_manager(abstract_manager):
-    """Менеджер хранения доменных моделей.
-
+    """
+    Менеджер хранения доменных моделей.
     При первом старте (is_first_start == True) формирует первичные справочники.
     """
 
@@ -19,20 +19,20 @@ class storage_manager(abstract_manager):
     _groups: dict = None
     __is_initialized: bool = False
 
-    # Singleton implementation
+    # Singleton
     def __new__(cls):
-        if not hasattr(cls, "_instance"):
-            cls._instance = super().__new__(cls)
-            cls._instance._storages = {}
-            cls._instance._ranges = {}
-            cls._instance._nomenclatures = {}
-            cls._instance._groups = {}
-            cls._instance.__is_initialized = False
-        return cls._instance
+        if not hasattr(cls, "instance"):
+            cls.instance = super(storage_manager, cls).__new__(cls)
+            cls.instance._storages = {}
+            cls.instance._ranges = {}
+            cls.instance._nomenclatures = {}
+            cls.instance._groups = {}
+            cls.instance.__is_initialized = False
+        return cls.instance
 
     def convert(self, settings=None) -> bool:
-        """Переопределенный метод abstract_manager.
-
+        """
+        Переопределенный метод abstract_manager.
         Если запуск первый (is_first_start == True) — генерирует первичные данные.
         При передаче settings извне — использует переданный объект (для тестов).
         """
@@ -55,8 +55,8 @@ class storage_manager(abstract_manager):
             return False
 
     def _initialize_primary_data(self) -> None:
-        """Инициализация первичных данных.
-
+        """
+        Инициализация первичных данных.
         Порядок важен: номенклатура зависит от единиц измерения и групп.
         """
         self.__create_ranges()
@@ -65,15 +65,15 @@ class storage_manager(abstract_manager):
         self.__create_storages()
 
     def __create_ranges(self) -> None:
-        """Генерация базовых и производных единиц измерения."""
-        gram = range_model(name="грамм", conversion_factor=1, base_range=None)
-        kilogram = range_model(name="килограмм", conversion_factor=1000, base_range=gram)
-        milliliter = range_model(name="миллилитр", conversion_factor=1, base_range=None)
-        liter = range_model(name="литр", conversion_factor=1000, base_range=milliliter)
-        piece = range_model(name="штука", conversion_factor=1, base_range=None)
+        """Генерация базовых и производных единиц измерения с использованием фабричных методов."""
+        kilogram = range_model.create_kilogram()
+        gram = kilogram.base
+        liter = range_model.create_liter()
+        milliliter = liter.base
+        piece = range_model.create_piece()
 
-        for item in (gram, kilogram, milliliter, liter, piece):
-            self.add_range(item)
+        for r in (gram, kilogram, milliliter, liter, piece):
+            self.add_range(r)
 
     def __create_groups(self) -> None:
         """Генерация групп номенклатуры под технологическую карту."""
@@ -81,8 +81,9 @@ class storage_manager(abstract_manager):
         dairy = nomenclature_group_model(name="Молочные продукты")
         dishes = nomenclature_group_model(name="Блюда")
 
-        for group in (grocery, dairy, dishes):
-            self.add_group(group)
+        self.add_group(grocery)
+        self.add_group(dairy)
+        self.add_group(dishes)
 
     def __create_nomenclatures(self) -> None:
         """Генерация номенклатуры (ингредиенты для рецепта и готовые блюда)."""
@@ -115,8 +116,8 @@ class storage_manager(abstract_manager):
         main_storage = storage_model(name="Основной склад", address="ул. Промышленная, 5, пом. 101")
         fridge = storage_model(name="Холодильник цеха", address="ул. Промышленная, 5, пом. 102")
 
-        for storage in (main_storage, fridge):
-            self.add_storage(storage)
+        self.add_storage(main_storage)
+        self.add_storage(fridge)
 
     def add_storage(self, item: storage_model) -> bool:
         """Добавить склад. Возвращает True, если добавлен; False, если дубликат или неверный тип."""
@@ -173,7 +174,7 @@ class storage_manager(abstract_manager):
             "storages": self._storages,
             "ranges": self._ranges,
             "nomenclatures": self._nomenclatures,
-            "groups": self._groups,
+            "groups": self._groups
         }
 
     @property

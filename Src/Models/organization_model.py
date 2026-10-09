@@ -125,3 +125,7 @@ class organization_model(abs_mod):
             raise argument_exception("ownership_form", "Форма собственности не должна превышать 5 символов")
 
         self.__ownership_form = value
+
+
+# Псевдоним для совместимости
+company_model = organization_model
