@@ -165,9 +165,9 @@ def test_success_storage_manager_first_start_ranges():
 
 def test_success_storage_manager_first_start_groups():
     """
-    Ожидание: Сформировано 3 группы номенклатуры.
+    Ожидание: Сформировано 4 группы номенклатуры.
     Метод: storage_manager.convert
-    Описание: Проверяет наличие групп Бакалея, Молочные продукты и Блюда.
+    Описание: Проверяет наличие групп Бакалея, Молочные продукты, Блюда и Упаковка.
     """
     # Подготовка
     manager = storage_manager()
@@ -176,18 +176,19 @@ def test_success_storage_manager_first_start_groups():
     manager.convert()
 
     # Проверки
-    assert len(manager.groups) == 3
+    assert len(manager.groups) == 4
     group_names = [g.name for g in manager.groups.values()]
     assert "Бакалея" in group_names
     assert "Молочные продукты" in group_names
     assert "Блюда" in group_names
+    assert "Упаковка" in group_names
 
 
 def test_success_storage_manager_first_start_nomenclatures():
     """
-    Ожидание: Сформировано 7 позиций номенклатуры с корректными связями.
+    Ожидание: Сформировано 10 позиций номенклатуры с корректными связями.
     Метод: storage_manager.convert
-    Описание: 6 ингредиентов для рецепта и 1 готовое блюдо (Блины классические).
+    Описание: 8 ингредиентов для рецептов, упаковка и 1 готовое блюдо (Блины классические).
               Проверяет корректные связи номенклатуры с группами и единицами.
     """
     # Подготовка
@@ -197,18 +198,26 @@ def test_success_storage_manager_first_start_nomenclatures():
     manager.convert()
 
     # Проверки
-    assert len(manager.nomenclatures) == 7
+    assert len(manager.nomenclatures) == 10
     nom_names = [n.name for n in manager.nomenclatures.values()]
     assert "Мука пшеничная" in nom_names
     assert "Молоко 3.2%" in nom_names
     assert "Яйца куриные" in nom_names
     assert "Масло сливочное" in nom_names
+    assert "Творог 9%" in nom_names
+    assert "Масло подсолнечное" in nom_names
+    assert "Коробка для завтраков" in nom_names
     assert "Блины классические" in nom_names
 
     # Проверяем связи ингредиента
     flour = next(n for n in manager.nomenclatures.values() if n.name == "Мука пшеничная")
     assert flour.group.name == "Бакалея"
     assert flour.range.name == "килограмм"
+
+    # Проверяем связи упаковки
+    box = next(n for n in manager.nomenclatures.values() if n.name == "Коробка для завтраков")
+    assert box.group.name == "Упаковка"
+    assert box.range.name == "штука"
 
     # Проверяем связи готового блюда
     pancakes = next(n for n in manager.nomenclatures.values() if n.name == "Блины классические")
