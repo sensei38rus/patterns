@@ -36,6 +36,21 @@ class abs_mod(ABC):
             raise argument_exception("id", "Идентификатор не должен быть пустым")
 
     @property
+    def unique_code(self) -> str:
+        """
+        Возвращает уникальный код объекта (алиас для id / совместимость).
+        """
+        return self.id
+
+    @unique_code.setter
+    def unique_code(self, value: str):
+        """
+        Задаёт уникальный код объекта (алиас для id / совместимость).
+        """
+        self.id = value
+
+        
+    @property
     def name(self):
         """
         Возвращает наименование объекта.
