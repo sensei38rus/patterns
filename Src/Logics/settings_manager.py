@@ -6,7 +6,7 @@ from Src.Core.common import common
 from Src.Core.exception import argument_exception
 from Src.Models.settings_model import settings_model
 from Src.Models.organization_model import organization_model
-from Src.Dtos.report_type_dto import report_type_enum
+from Src.Dtos.report_type_enum import report_type_enum
 from Src.Dtos.response_format_dto import response_format_dto
 
 

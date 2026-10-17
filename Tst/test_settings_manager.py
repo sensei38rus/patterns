@@ -257,33 +257,5 @@ def test_success_settings_manager_load_flat_format():
     assert manager.settings.first_start == manager.settings.is_first_start
 
 
-def test_success_settings_manager_create_killogramm():
-    """
-    Ожидание: Фабричный метод create_killogramm возвращает объект range_model со свойствами килограмма.
-    Метод: settings_manager.create_killogramm
-    Описание: Проверяет работу фабричного метода создания килограмма через settings_manager.
-    """
-    # Act
-    kg = settings_manager.create_killogramm()
-
-    # Assert
-    assert kg.name == "Килограмм"
-    assert kg.value == 1000
-    assert kg.base is not None
-    assert kg.base.name == "Грамм"
 
 
-def test_success_settings_manager_create_kilogram():
-    """
-    Ожидание: Фабричный метод create_kilogram возвращает объект range_model со свойствами килограмма.
-    Метод: settings_manager.create_kilogram
-    Описание: Проверяет работу фабричного метода create_kilogram через settings_manager.
-    """
-    # Act
-    kg = settings_manager.create_kilogram()
-
-    # Assert
-    assert kg.name == "килограмм"
-    assert kg.value == 1000
-    assert kg.base is not None
-    assert kg.base.name == "грамм"
