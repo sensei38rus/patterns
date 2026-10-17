@@ -37,14 +37,9 @@ def __create_sample_recipe() -> recipe_model:
 
 def test_success_report_factory_create_text_report():
     """
-    <summary>
+    
     Проверка успешного создания инстанса текстового отчета через абстрактную фабрику.
-    </summary>
-    <description>
-    Arrange: Инициализация фабрики report_factory.
-    Act: Вызов create с поддерживаемым типом отчета TXT.
-    Assert: Созданный объект не None, является экземпляром abstract_report и text_report.
-    </description>
+   
     """
     # Arrange
     factory = report_factory()
@@ -60,13 +55,9 @@ def test_success_report_factory_create_text_report():
 
 def test_fail_report_factory_create_unsupported_type_raises_argument_exception():
     """
-    <summary>
+    
     Проверка выброса исключения при попытке запросить нереализованный тип отчета.
-    </summary>
-    <description>
-    Arrange: Инициализация фабрики report_factory.
-    Act & Assert: При передаче некорректного значения или None генерируется argument_exception.
-    </description>
+    
     """
     # Arrange
     factory = report_factory()
@@ -81,14 +72,9 @@ def test_fail_report_factory_create_unsupported_type_raises_argument_exception()
 
 def test_success_full_chain_report_factory_build_recipe():
     """
-    <summary>
+    
     Сквозной тест генерации отчета по рецепту через фабрику отчетов.
-    </summary>
-    <description>
-    Arrange: Инициализация фабрики, создание рецепта с строками ингредиентов.
-    Act: Получение инстанса отчета через factory.create и генерация отчета методом build.
-    Assert: Результат является report_result_dto, текст содержит заголовок и строки брутто/нетто.
-    </description>
+   
     """
     # Arrange
     factory = report_factory()
@@ -118,14 +104,9 @@ def test_success_full_chain_report_factory_build_recipe():
 
 def test_success_report_factory_create_by_full_enum_and_name():
     """
-    <summary>
+   
     Проверка, что фабрика принимает тип из Src.Dtos.report_type_enum и строковое имя формата.
-    </summary>
-    <description>
-    Arrange: Инициализация фабрики report_factory.
-    Act: Вызов create с report_type_enum.TXT и со строкой "TEXT".
-    Assert: Оба вызова возвращают экземпляр text_report.
-    </description>
+   
     """
     # Arrange
     factory = report_factory()
@@ -141,14 +122,9 @@ def test_success_report_factory_create_by_full_enum_and_name():
 
 def test_success_report_factory_settings_encapsulated():
     """
-    <summary>
+    
     Проверка инкапсуляции настроек в фабрике: через конструктор и через свойство settings.
-    </summary>
-    <description>
-    Arrange: Создание settings_model с форматом TXT.
-    Act: Передача настроек в конструктор и замена настроек через setter свойства settings.
-    Assert: Фабрика возвращает переданные настройки; неверный тип настроек вызывает argument_exception.
-    </description>
+   
     """
     # Arrange
     settings = settings_model()
@@ -171,14 +147,9 @@ def test_success_report_factory_settings_encapsulated():
 
 def test_success_report_factory_create_default_text_report():
     """
-    <summary>
+    
     Проверка создания отчета по умолчанию в формате из настроек.
-    </summary>
-    <description>
-    Arrange: Настройки с response_format = TXT.
-    Act: Вызов create_default.
-    Assert: Созданный объект является экземпляром text_report.
-    </description>
+   
     """
     # Arrange
     settings = settings_model()
@@ -196,14 +167,9 @@ def test_success_report_factory_create_default_text_report():
 
 def test_success_report_factory_create_all_supported_formats():
     """
-    <summary>
+   
     Проверка подключения всех поддерживаемых форматов в фабрику отчетов.
-    </summary>
-    <description>
-    Arrange: Инициализация фабрики report_factory.
-    Act: Вызов create для каждого значения report_type_enum.
-    Assert: Каждому формату соответствует своя реализация отчета.
-    </description>
+    
     """
     # Arrange
     factory = report_factory()
@@ -225,14 +191,9 @@ def test_success_report_factory_create_all_supported_formats():
 
 def test_success_report_factory_create_default_html_report():
     """
-    <summary>
+    
     Проверка создания отчета по умолчанию в формате из настроек (HTML по умолчанию).
-    </summary>
-    <description>
-    Arrange: Настройки по умолчанию (response_format = HTML).
-    Act: Вызов create_default.
-    Assert: Созданный объект является экземпляром html_report.
-    </description>
+    
     """
     # Arrange
     factory = report_factory(settings_model())
@@ -248,14 +209,7 @@ def test_success_report_factory_create_default_html_report():
 
 def test_success_markdown_report_build():
     """
-    <summary>
     Проверка формирования отчета в формате Markdown.
-    </summary>
-    <description>
-    Arrange: Технологическая карты с ингредиентами.
-    Act: Генерация отчета markdown_report.build.
-    Assert: Результат содержит шапку, разделитель колонок и строки таблицы.
-    </description>
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -274,14 +228,7 @@ def test_success_markdown_report_build():
 
 def test_success_csv_report_build():
     """
-    <summary>
     Проверка формирования отчета в формате CSV.
-    </summary>
-    <description>
-    Arrange: Технологическая карты с ингредиентами.
-    Act: Генерация отчета csv_report.build.
-    Assert: Результат содержит заголовок через запятую и строки данных.
-    </description>
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -299,14 +246,7 @@ def test_success_csv_report_build():
 
 def test_success_xml_report_build():
     """
-    <summary>
     Проверка формирования отчета в формате XML.
-    </summary>
-    <description>
-    Arrange: Технологическая карты с ингредиентами.
-    Act: Генерация отчета xml_report.build.
-    Assert: Результат содержит XML заголовок, узел recipe и узлы item.
-    </description>
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -325,14 +265,7 @@ def test_success_xml_report_build():
 
 def test_success_html_report_build():
     """
-    <summary>
     Проверка формирования отчета в формате HTML.
-    </summary>
-    <description>
-    Arrange: Технологическая карты с ингредиентами.
-    Act: Генерация отчета html_report.build.
-    Assert: Результат содержит таблицу с шапкой и строками данных.
-    </description>
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -351,14 +284,7 @@ def test_success_html_report_build():
 
 def test_success_rtf_report_build():
     """
-    <summary>
     Проверка формирования отчета в формате RTF.
-    </summary>
-    <description>
-    Arrange: Технологическая карты с ингредиентами.
-    Act: Генерация отчета rtf_report.build.
-    Assert: Результат содержит RTF заголовок, разрывы абзацев и строки данных.
-    </description>
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -377,13 +303,7 @@ def test_success_rtf_report_build():
 
 def test_fail_reports_build_invalid_source_raises_argument_exception():
     """
-    <summary>
     Проверка выброса исключения при передаче некорректного источника данных.
-    </summary>
-    <description>
-    Arrange: Реализации отчетов всех форматов.
-    Act & Assert: Вызов build с объектом, не являющимся recipe_model, генерирует argument_exception.
-    </description>
     """
     # Arrange
     reports = [text_report(), csv_report(), markdown_report(), xml_report(), html_report(), rtf_report()]
