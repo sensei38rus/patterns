@@ -79,3 +79,7 @@ class abs_mod(ABC):
         if isinstance(other, abs_mod):
             return str(self.id) == str(other.id)
         return False
+
+
+abstract_model = abs_mod
+AbstractModel = abs_mod
