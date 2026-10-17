@@ -1,27 +1,23 @@
 from Src.Core.abstract_report import abstract_report
-from Src.Models.recipe_model import recipe_model
-from Src.Core.validator import validator
 from Src.Dtos.report_result_dto import report_result_dto
+from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация текстового представления отчета по рецепту
+Реализация текстового представления отчета
 """
 class text_report(abstract_report):
-    # Рецепт
-    __receipt:recipe_model
 
     """
     Переопределенный метод формирования отчета
     """
     def build(self, source) -> report_result_dto:
-        validator.validate(source, recipe_model)
-        self.__receipt = source
+        table = report_source_builder.build(source)
 
-        header = "Код | Наименование | Брутто | Нетто"
+        header = " | ".join(title for key, title in table.columns)
         data = ""
 
-        for item in self.__receipt.items:
-            data += f"\n{item.unique_code} | {item.nomenclature.name} | {item.quantity} | {item.weight}"
+        for row in table.rows:
+            data += "\n" + " | ".join(row[key] for key in table.keys)
 
         result = report_result_dto()
         result.text = f"{header}{data}"

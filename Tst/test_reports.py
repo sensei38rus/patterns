@@ -312,3 +312,56 @@ def test_fail_reports_build_invalid_source_raises_argument_exception():
     for report in reports:
         with pytest.raises(argument_exception):
             report.build("NOT_RECIPE")
+
+
+def test_success_reports_build_nomenclature_in_all_formats():
+    """
+    Проверка формирования отчета по номенклатуре во всех форматах.
+    """
+    # Arrange
+    group = nomenclature_group_model.create_grocery()
+    gram = range_model.create_gram()
+    flour = nomenclature_model.create_flour(group, gram)
+
+    reports = [text_report(), csv_report(), markdown_report(), xml_report(), html_report(), rtf_report()]
+
+    # Act & Assert
+    for report in reports:
+        result = report.build(flour)
+        assert isinstance(result, report_result_dto)
+        assert result.text != ""
+
+    text = text_report().build(flour).text
+    assert "Код | Наименование | Группа | Единица измерения" in text
+    assert "Мука пшеничная" in text
+    assert "Бакалея" in text
+
+    xml = xml_report().build(flour).text
+    assert "<nomenclature " in xml
+    assert 'full_name="Мука пшеничная высший сорт"' in xml
+
+
+def test_success_reports_build_unit_in_all_formats():
+    """
+    Проверка формирования отчета по единице измерения во всех форматах.
+    """
+    # Arrange
+    kilogram = range_model.create_kilogram()
+
+    reports = [text_report(), csv_report(), markdown_report(), xml_report(), html_report(), rtf_report()]
+
+    # Act & Assert
+    for report in reports:
+        result = report.build(kilogram)
+        assert isinstance(result, report_result_dto)
+        assert result.text != ""
+
+    text = text_report().build(kilogram).text
+    assert "Код | Наименование | Коэффициент | Базовая единица" in text
+    assert "килограмм" in text
+    assert "1000" in text
+    assert "грамм" in text
+
+    xml = xml_report().build(kilogram).text
+    assert "<unit " in xml
+    assert 'conversion_factor="1000"' in xml

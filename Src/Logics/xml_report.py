@@ -1,10 +1,9 @@
 from Src.Core.abstract_report import abstract_report
-from Src.Core.validator import validator
 from Src.Dtos.report_result_dto import report_result_dto
-from Src.Models.recipe_model import recipe_model
+from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация отчета по рецепту в формате XML
+Реализация отчета в формате XML
 """
 class xml_report(abstract_report):
 
@@ -15,21 +14,25 @@ class xml_report(abstract_report):
     Переопределенный метод формирования отчета
     """
     def build(self, source) -> report_result_dto:
-        validator.validate(source, recipe_model)
+        table = report_source_builder.build(source)
 
-        recipe_name = self.__escape(source.name)
+        attributes = f' name="{self.__escape(table.title)}"'
+        for key, value in table.attributes.items():
+            attributes += f' {key}="{self.__escape(value)}"'
+
         data = ""
 
-        for item in source.items:
-            code = self.__escape(item.unique_code)
-            name = self.__escape(item.nomenclature.name)
-            data += f'\n  <item code="{code}" name="{name}" quantity="{item.quantity}" weight="{item.weight}" />'
+        for row in table.rows:
+            row_attributes = ""
+            for key in table.keys:
+                row_attributes += f' {key}="{self.__escape(row[key])}"'
+            data += f"\n  <item{row_attributes} />"
 
         result = report_result_dto()
         result.text = (
             f"{self.__xml_header}\n"
-            f'<recipe name="{recipe_name}" cooking_time="{source.cooking_time}" portions="{source.portions}">'
-            f"{data}\n</recipe>"
+            f"<{table.tag}{attributes}>"
+            f"{data}\n</{table.tag}>"
         )
 
         return result

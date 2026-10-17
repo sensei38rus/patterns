@@ -1,32 +1,27 @@
 from Src.Core.abstract_report import abstract_report
-from Src.Core.validator import validator
 from Src.Dtos.report_result_dto import report_result_dto
-from Src.Models.recipe_model import recipe_model
+from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация отчета по рецепту в формате Markdown
+Реализация отчета в формате Markdown
 """
 class markdown_report(abstract_report):
-
-    # Заголовок таблицы и разделитель колонок
-    __header:str = "| Код | Наименование | Брутто | Нетто |"
-    __separator:str = "| --- | --- | --- | --- |"
 
     """
     Переопределенный метод формирования отчета
     """
     def build(self, source) -> report_result_dto:
-        validator.validate(source, recipe_model)
+        table = report_source_builder.build(source)
 
+        header = "| " + " | ".join(self.__escape(title) for key, title in table.columns) + " |"
+        separator = "| " + " | ".join("---" for key, title in table.columns) + " |"
         data = ""
 
-        for item in source.items:
-            code = self.__escape(item.unique_code)
-            name = self.__escape(item.nomenclature.name)
-            data += f"\n| {code} | {name} | {item.quantity} | {item.weight} |"
+        for row in table.rows:
+            data += "\n| " + " | ".join(self.__escape(row[key]) for key in table.keys) + " |"
 
         result = report_result_dto()
-        result.text = f"{self.__header}\n{self.__separator}{data}"
+        result.text = f"{header}\n{separator}{data}"
 
         return result
 

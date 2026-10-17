@@ -1,10 +1,9 @@
 from Src.Core.abstract_report import abstract_report
-from Src.Core.validator import validator
 from Src.Dtos.report_result_dto import report_result_dto
-from Src.Models.recipe_model import recipe_model
+from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация отчета по рецепту в формате RTF
+Реализация отчета в формате RTF
 """
 class rtf_report(abstract_report):
 
@@ -17,15 +16,13 @@ class rtf_report(abstract_report):
     Переопределенный метод формирования отчета
     """
     def build(self, source) -> report_result_dto:
-        validator.validate(source, recipe_model)
+        table = report_source_builder.build(source)
 
-        header = self.__escape("Код | Наименование | Брутто | Нетто")
+        header = self.__escape(" | ".join(title for key, title in table.columns))
         data = ""
 
-        for item in source.items:
-            code = self.__escape(item.unique_code)
-            name = self.__escape(item.nomenclature.name)
-            data += f"\n{code} | {name} | {item.quantity} | {item.weight}{self.__paragraph_break}"
+        for row in table.rows:
+            data += "\n" + self.__escape(" | ".join(row[key] for key in table.keys)) + self.__paragraph_break
 
         result = report_result_dto()
         result.text = f"{self.__rtf_header}\n{self.__font_settings}{header}{self.__paragraph_break}{data}\n}}"
