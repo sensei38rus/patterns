@@ -3,7 +3,8 @@ from Src.Dtos.report_result_dto import report_result_dto
 from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация отчета в формате Markdown
+Реализация отчета в формате Markdown.
+Результат формируется в виде бинарных данных (кодировка UTF-8) для скачивания файла.
 """
 class markdown_report(abstract_report):
 
@@ -21,7 +22,7 @@ class markdown_report(abstract_report):
             data += "\n| " + " | ".join(self.__escape(row[key]) for key in table.keys) + " |"
 
         result = report_result_dto()
-        result.text = f"{header}\n{separator}{data}"
+        result.binary = list(f"{header}\n{separator}{data}".encode("utf-8"))
 
         return result
 

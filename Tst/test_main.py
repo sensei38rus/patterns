@@ -50,6 +50,7 @@ def test_success_api_get_report_recipe_markdown():
     data = response.get_data(as_text=True)
     assert response.status_code == 200
     assert response.content_type == "text/markdown; charset=utf-8"
+    assert response.headers["Content-Disposition"] == 'attachment; filename="report.md"'
     assert "| Код | Наименование | Брутто | Нетто |" in data
     assert "| --- | --- | --- | --- |" in data
 
@@ -65,6 +66,7 @@ def test_success_api_get_report_recipe_xml():
     data = response.get_data(as_text=True)
     assert response.status_code == 200
     assert response.content_type == "application/xml; charset=utf-8"
+    assert "Content-Disposition" not in response.headers
     assert data.startswith('<?xml version="1.0" encoding="utf-8"?>')
     assert "<recipe " in data
 
@@ -80,6 +82,7 @@ def test_success_api_get_report_nomenclature_text():
 
     data = response.get_data(as_text=True)
     assert response.status_code == 200
+    assert "Content-Disposition" not in response.headers
     assert "Код | Наименование | Группа | Единица измерения" in data
     assert nomenclature.name in data
     assert nomenclature.group.name in data
@@ -97,7 +100,23 @@ def test_success_api_get_report_nomenclature_csv_by_russian_type():
     data = response.get_data(as_text=True)
     assert response.status_code == 200
     assert response.content_type == "text/csv; charset=utf-8"
+    assert response.headers["Content-Disposition"] == 'attachment; filename="report.csv"'
     assert data.startswith("Код,Наименование,Группа,Единица измерения")
+
+
+def test_success_api_get_report_download_is_binary_utf8():
+    client = __create_client()
+
+    response = client.get(
+        "/api/get_report",
+        query_string={"format": "csv", "type": "recipe", "code": __first_recipe_code()},
+    )
+
+    raw = response.get_data()
+    assert response.status_code == 200
+    assert isinstance(raw, bytes)
+    assert len(raw) > 0
+    assert raw.decode("utf-8").startswith("Код,Наименование,Брутто,Нетто")
 
 
 def test_success_api_get_report_unit_html():

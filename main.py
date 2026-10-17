@@ -46,6 +46,15 @@ RESPONSE_CONTENT_TYPES = {
     report_type_enum.RTF: "application/rtf",
 }
 
+# Форматы, для которых отчет формируется в виде бинарных данных и скачивается файлом
+DOWNLOAD_REPORT_TYPES = (report_type_enum.CSV, report_type_enum.MARKDOWN)
+
+# Расширение файла отчета для скачиваемых форматов
+REPORT_FILE_EXTENSIONS = {
+    report_type_enum.CSV: "csv",
+    report_type_enum.MARKDOWN: "md",
+}
+
 
 def find_entity(entity_type: str, code: str):
     """
@@ -87,6 +96,9 @@ def get_report():
                  если не указан - формат из настроек приложения
         type   - тип сущности (рецепт, номенклатура, единица измерения)
         code   - код (идентификатор) сущности
+
+    Для markdown и csv отчет формируется в виде бинарных данных и скачивается файлом,
+    для остальных форматов возвращается структурированный текст.
     """
     format_value = (request.args.get("format") or "").strip()
     type_value = (request.args.get("type") or "").strip()
@@ -136,6 +148,18 @@ def get_report():
 
     result = report.build(entity)
 
+    # Markdown и CSV: бинарные данные, отчет скачивается файлом
+    if report_type in DOWNLOAD_REPORT_TYPES:
+        file_name = f"report.{REPORT_FILE_EXTENSIONS[report_type]}"
+
+        return Response(
+            bytes(result.binary),
+            status=200,
+            content_type=RESPONSE_CONTENT_TYPES.get(report_type, "application/octet-stream"),
+            headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+        )
+
+    # Остальные форматы: структурированный текст в теле ответа
     return Response(
         result.text,
         status=200,

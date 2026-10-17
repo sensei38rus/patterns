@@ -3,7 +3,8 @@ from Src.Dtos.report_result_dto import report_result_dto
 from Src.Logics.report_source_builder import report_source_builder
 
 """
-Реализация отчета в формате CSV
+Реализация отчета в формате CSV.
+Результат формируется в виде бинарных данных (кодировка UTF-8) для скачивания файла.
 """
 class csv_report(abstract_report):
 
@@ -20,7 +21,7 @@ class csv_report(abstract_report):
             data += "\n" + ",".join(self.__escape(row[key]) for key in table.keys)
 
         result = report_result_dto()
-        result.text = f"{header}{data}"
+        result.binary = list(f"{header}{data}".encode("utf-8"))
 
         return result
 

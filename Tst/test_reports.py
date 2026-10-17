@@ -35,6 +35,16 @@ def __create_sample_recipe() -> recipe_model:
     return recipe
 
 
+def __get_report_text(result: report_result_dto) -> str:
+    """
+    Вспомогательный метод: содержимое отчета в виде текста (текстовое или бинарное поле).
+    """
+    if result.binary:
+        return bytes(result.binary).decode("utf-8")
+
+    return result.text
+
+
 def test_success_report_factory_create_text_report():
     """
     
@@ -209,7 +219,7 @@ def test_success_report_factory_create_default_html_report():
 
 def test_success_markdown_report_build():
     """
-    Проверка формирования отчета в формате Markdown.
+    Проверка формирования отчета в формате Markdown (бинарные данные).
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -220,15 +230,19 @@ def test_success_markdown_report_build():
 
     # Assert
     assert isinstance(result, report_result_dto)
-    assert "| Код | Наименование | Брутто | Нетто |" in result.text
-    assert "| --- | --- | --- | --- |" in result.text
-    assert f"| {recipe.items[0].unique_code} | Мука пшеничная | 100.0 | 100.0 |" in result.text
-    assert f"| {recipe.items[1].unique_code} | Сахар | 20.0 | 20.0 |" in result.text
+    assert result.text == ""
+    assert len(result.binary) > 0
+
+    content = __get_report_text(result)
+    assert "| Код | Наименование | Брутто | Нетто |" in content
+    assert "| --- | --- | --- | --- |" in content
+    assert f"| {recipe.items[0].unique_code} | Мука пшеничная | 100.0 | 100.0 |" in content
+    assert f"| {recipe.items[1].unique_code} | Сахар | 20.0 | 20.0 |" in content
 
 
 def test_success_csv_report_build():
     """
-    Проверка формирования отчета в формате CSV.
+    Проверка формирования отчета в формате CSV (бинарные данные).
     """
     # Arrange
     recipe = __create_sample_recipe()
@@ -239,9 +253,13 @@ def test_success_csv_report_build():
 
     # Assert
     assert isinstance(result, report_result_dto)
-    assert result.text.startswith("Код,Наименование,Брутто,Нетто")
-    assert f"{recipe.items[0].unique_code},Мука пшеничная,100.0,100.0" in result.text
-    assert f"{recipe.items[1].unique_code},Сахар,20.0,20.0" in result.text
+    assert result.text == ""
+    assert len(result.binary) > 0
+
+    content = __get_report_text(result)
+    assert content.startswith("Код,Наименование,Брутто,Нетто")
+    assert f"{recipe.items[0].unique_code},Мука пшеничная,100.0,100.0" in content
+    assert f"{recipe.items[1].unique_code},Сахар,20.0,20.0" in content
 
 
 def test_success_xml_report_build():
@@ -329,7 +347,7 @@ def test_success_reports_build_nomenclature_in_all_formats():
     for report in reports:
         result = report.build(flour)
         assert isinstance(result, report_result_dto)
-        assert result.text != ""
+        assert __get_report_text(result) != ""
 
     text = text_report().build(flour).text
     assert "Код | Наименование | Группа | Единица измерения" in text
@@ -354,7 +372,7 @@ def test_success_reports_build_unit_in_all_formats():
     for report in reports:
         result = report.build(kilogram)
         assert isinstance(result, report_result_dto)
-        assert result.text != ""
+        assert __get_report_text(result) != ""
 
     text = text_report().build(kilogram).text
     assert "Код | Наименование | Коэффициент | Базовая единица" in text
