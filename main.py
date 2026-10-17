@@ -56,99 +56,82 @@ REPORT_FILE_EXTENSIONS = {
 }
 
 
-def find_entity(entity_type: str, code: str):
+def get_entity_collection(entity_type: str) -> dict:
     """
-    Найти сущность по типу и коду (идентификатору).
-    Возвращает None, если сущность не найдена.
+    Получить коллекцию сущностей по типу.
     """
     if entity_type == "recipe":
-        return recipes.get_recipe(code)
+        return recipes.recipes
 
     if entity_type == "nomenclature":
-        return storage.nomenclatures.get(code)
+        return storage.nomenclatures
 
     if entity_type == "unit":
-        return storage.ranges.get(code)
+        return storage.ranges
 
-    return None
+    return {}
 
 
-@app.route("/")
-def index():
+def find_entity(entity_type: str, code: str):
     """
-    Корневой маршрут - справка по API.
+    Найти сущность по коду.
+    Код вида 0, 1, 2 ... - позиция сущности в коллекции; иначе полный код (UUID).
+    Возвращает None, если сущность не найдена.
     """
-    return Response(
-        "API формирования отчетов. "
-        "Пример запроса: /api/get_report?format=markdown&type=recipe&code=<код сущности>",
-        status=200,
-        content_type="text/plain; charset=utf-8",
-    )
+    collection = get_entity_collection(entity_type)
+    code = str(code).strip()
+
+    if code.isdigit():
+        items = list(collection.values())
+        index = int(code)
+
+        return items[index] if 0 <= index < len(items) else None
+
+    return collection.get(code)
 
 
-@app.route("/api/get_report", methods=["GET"])
-def get_report():
+def create_error_response(message: str, status: int) -> Response:
     """
-    GET endpoint формирования отчета.
-
-    Параметры запроса:
-        format - формат отчета (txt, csv, markdown, xml, html, rtf);
-                 если не указан - формат из настроек приложения
-        type   - тип сущности (рецепт, номенклатура, единица измерения)
-        code   - код (идентификатор) сущности
-
-    Для markdown и csv отчет формируется в виде бинарных данных и скачивается файлом,
-    для остальных форматов возвращается структурированный текст.
+    Сформировать ответ об ошибке запроса.
     """
-    format_value = (request.args.get("format") or "").strip()
-    type_value = (request.args.get("type") or "").strip()
-    code = (request.args.get("code") or "").strip()
+    return Response(message, status=status, content_type="text/plain; charset=utf-8")
 
-    # Тип сущности
+
+def resolve_entity(type_value: str, code: str):
+    """
+    Проверить тип сущности и код, найти сущность.
+    Возвращает кортеж (сущность, ответ об ошибке); ровно одно из значений не None.
+    """
     if not type_value:
-        return Response(
-            "Не указан параметр type (рецепт, номенклатура, единица измерения)",
-            status=400, content_type="text/plain; charset=utf-8",
+        return None, create_error_response(
+            "Не указан тип сущности (рецепт, номенклатура, единица измерения)", 400,
         )
 
     entity_type = ENTITY_TYPES.get(type_value.lower())
     if entity_type is None:
-        return Response(
-            f"Указанный тип сущности '{type_value}' не поддерживается",
-            status=400, content_type="text/plain; charset=utf-8",
+        return None, create_error_response(
+            f"Указанный тип сущности '{type_value}' не поддерживается", 400,
         )
 
-    # Код сущности
     if not code:
-        return Response(
-            "Не указан параметр code (код сущности)",
-            status=400, content_type="text/plain; charset=utf-8",
-        )
+        return None, create_error_response("Не указан код сущности", 400)
 
     entity = find_entity(entity_type, code)
     if entity is None:
-        return Response(
-            f"Сущность '{entity_type}' с кодом '{code}' не найдена",
-            status=404, content_type="text/plain; charset=utf-8",
+        return None, create_error_response(
+            f"Сущность '{entity_type}' с кодом '{code}' не найдена", 404,
         )
 
-    # Формат отчета: явный параметр либо формат из настроек
-    try:
-        if format_value:
-            report_type = settings_manager.convert_report_type(format_value)
-        else:
-            report_type = factory.settings.response_format
+    return entity, None
 
-        report = factory.create(report_type)
-    except argument_exception:
-        return Response(
-            f"Указанный формат '{format_value}' не поддерживается",
-            status=400, content_type="text/plain; charset=utf-8",
-        )
 
+def create_report_response(report, report_type, entity) -> Response:
+    """
+    Сформировать HTTP ответ с отчетом по сущности.
+    Markdown и CSV отдаются файлом (бинарные данные), остальные форматы - структурированный текст.
+    """
     result = report.build(entity)
 
-    # Markdown и CSV: бинарные данные, отчет скачивается файлом
     if report_type in DOWNLOAD_REPORT_TYPES:
         file_name = f"report.{REPORT_FILE_EXTENSIONS[report_type]}"
 
@@ -159,12 +142,126 @@ def get_report():
             headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
         )
 
-    # Остальные форматы: структурированный текст в теле ответа
     return Response(
         result.text,
         status=200,
         content_type=RESPONSE_CONTENT_TYPES.get(report_type, "text/plain; charset=utf-8"),
     )
+
+
+def handle_get_report(format_value: str, type_value: str, code: str) -> Response:
+    """
+    Сформировать ответ endpoint формирования отчета (общая логика для query и path).
+    """
+    entity, error = resolve_entity(type_value, code)
+    if error is not None:
+        return error
+
+    # Формат отчета: явный параметр либо формат из настроек
+    try:
+        if format_value:
+            report_type = settings_manager.convert_report_type(format_value)
+        else:
+            report_type = factory.settings.response_format
+
+        report = factory.create(report_type)
+    except argument_exception:
+        return create_error_response(f"Указанный формат '{format_value}' не поддерживается", 400)
+
+    return create_report_response(report, report_type, entity)
+
+
+def handle_get_report_default(type_value: str, code: str) -> Response:
+    """
+    Сформировать ответ endpoint отчета в формате из настроек (общая логика для query и path).
+    """
+    entity, error = resolve_entity(type_value, code)
+    if error is not None:
+        return error
+
+    try:
+        report = factory.create_default()
+    except argument_exception:
+        return create_error_response("Формат отчета, заданный в настройках, не поддерживается", 400)
+
+    return create_report_response(report, factory.settings.response_format, entity)
+
+
+@app.route("/")
+def index():
+    """
+    Корневой маршрут - справка по API.
+    """
+    return Response(
+        "API формирования отчетов. "
+        "Примеры запросов: "
+        "/api/get_report/xml/recipe/0, "
+        "/api/get_report?format=markdown&type=recipe&code=0, "
+        "/api/get_report_default/recipe/0",
+        status=200,
+        content_type="text/plain; charset=utf-8",
+    )
+
+
+@app.route("/api/get_report", methods=["GET"])
+def get_report():
+    """
+    GET endpoint формирования отчета по параметрам запроса.
+
+    Параметры запроса:
+        format - формат отчета (txt, csv, markdown, xml, html, rtf);
+                 если не указан - формат из настроек приложения
+        type   - тип сущности (рецепт, номенклатура, единица измерения)
+        code   - код сущности: позиция (0, 1, 2 ...) или полный код (UUID)
+
+    Для markdown и csv отчет формируется в виде бинарных данных и скачивается файлом,
+    для остальных форматов возвращается структурированный текст.
+    """
+    return handle_get_report(
+        (request.args.get("format") or "").strip(),
+        (request.args.get("type") or "").strip(),
+        (request.args.get("code") or "").strip(),
+    )
+
+
+@app.route("/api/get_report/<format_value>/<type_value>/<code>", methods=["GET"])
+def get_report_by_path(format_value: str, type_value: str, code: str):
+    """
+    GET endpoint формирования отчета по параметрам пути.
+    Пример: /api/get_report/xml/recipe/0
+
+    Форматы: txt, csv, markdown, xml, html, rtf.
+    Типы: рецепт / recipe, номенклатура / nomenclature, единица измерения / unit.
+    Код: позиция сущности (0, 1, 2 ...) или полный код (UUID).
+    """
+    return handle_get_report(format_value.strip(), type_value.strip(), code.strip())
+
+
+@app.route("/api/get_report_default", methods=["GET"])
+def get_report_default():
+    """
+    GET endpoint формирования отчета в формате из настроек приложения (create_default)
+    по параметрам запроса.
+
+    Параметры запроса:
+        type - тип сущности (рецепт, номенклатура, единица измерения)
+        code - код сущности: позиция (0, 1, 2 ...) или полный код (UUID)
+
+    Формат отчета определяется настройками (settings.response_format) через report_factory.create_default.
+    """
+    return handle_get_report_default(
+        (request.args.get("type") or "").strip(),
+        (request.args.get("code") or "").strip(),
+    )
+
+
+@app.route("/api/get_report_default/<type_value>/<code>", methods=["GET"])
+def get_report_default_by_path(type_value: str, code: str):
+    """
+    GET endpoint формирования отчета в формате из настроек по параметрам пути.
+    Пример: /api/get_report_default/recipe/0
+    """
+    return handle_get_report_default(type_value.strip(), code.strip())
 
 
 if __name__ == "__main__":
