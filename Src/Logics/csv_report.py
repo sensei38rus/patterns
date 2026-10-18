@@ -8,6 +8,20 @@ from Src.Logics.report_source_builder import report_source_builder
 """
 class csv_report(abstract_report):
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого CSV-отчета.
+        """
+        return "text/csv; charset=utf-8"
+
+    @property
+    def file_extension(self) -> str:
+        """
+        Расширение файла CSV-отчета.
+        """
+        return "csv"
+
     """
     Переопределенный метод формирования отчета
     """

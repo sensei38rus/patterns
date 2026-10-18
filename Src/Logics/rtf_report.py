@@ -12,6 +12,13 @@ class rtf_report(abstract_report):
     __font_settings:str = "\\f0\\fs22 "
     __paragraph_break:str = "\\par"
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого RTF-отчета.
+        """
+        return "application/rtf"
+
     """
     Переопределенный метод формирования отчета
     """

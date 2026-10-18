@@ -7,6 +7,13 @@ from Src.Logics.report_source_builder import report_source_builder
 """
 class html_report(abstract_report):
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого HTML-отчета.
+        """
+        return "text/html; charset=utf-8"
+
     """
     Переопределенный метод формирования отчета
     """

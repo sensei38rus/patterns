@@ -10,6 +10,13 @@ class xml_report(abstract_report):
     # Заголовок XML документа
     __xml_header:str = '<?xml version="1.0" encoding="utf-8"?>'
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого XML-отчета.
+        """
+        return "application/xml; charset=utf-8"
+
     """
     Переопределенный метод формирования отчета
     """

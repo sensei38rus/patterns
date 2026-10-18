@@ -8,6 +8,20 @@ from Src.Logics.report_source_builder import report_source_builder
 """
 class markdown_report(abstract_report):
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого Markdown-отчета.
+        """
+        return "text/markdown; charset=utf-8"
+
+    @property
+    def file_extension(self) -> str:
+        """
+        Расширение файла Markdown-отчета.
+        """
+        return "md"
+
     """
     Переопределенный метод формирования отчета
     """

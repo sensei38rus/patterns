@@ -1,6 +1,5 @@
 from flask import Flask, Response, request
 from Src.Core.exception import argument_exception
-from Src.Dtos.report_type_enum import report_type_enum
 from Src.Logics.recipe_manager import recipe_manager
 from Src.Logics.report_factory import report_factory
 from Src.Logics.settings_manager import settings_manager
@@ -34,25 +33,6 @@ ENTITY_TYPES = {
     "единица измерения": "unit",
     "unit": "unit",
     "range": "unit",
-}
-
-# Content-Type ответа в зависимости от формата отчета
-RESPONSE_CONTENT_TYPES = {
-    report_type_enum.TXT: "text/plain; charset=utf-8",
-    report_type_enum.CSV: "text/csv; charset=utf-8",
-    report_type_enum.MARKDOWN: "text/markdown; charset=utf-8",
-    report_type_enum.XML: "application/xml; charset=utf-8",
-    report_type_enum.HTML: "text/html; charset=utf-8",
-    report_type_enum.RTF: "application/rtf",
-}
-
-# Форматы, для которых отчет формируется в виде бинарных данных и скачивается файлом
-DOWNLOAD_REPORT_TYPES = (report_type_enum.CSV, report_type_enum.MARKDOWN)
-
-# Расширение файла отчета для скачиваемых форматов
-REPORT_FILE_EXTENSIONS = {
-    report_type_enum.CSV: "csv",
-    report_type_enum.MARKDOWN: "md",
 }
 
 
@@ -125,27 +105,28 @@ def resolve_entity(type_value: str, code: str):
     return entity, None
 
 
-def create_report_response(report, report_type, entity) -> Response:
+def create_report_response(report, entity) -> Response:
     """
     Сформировать HTTP ответ с отчетом по сущности.
-    Markdown и CSV отдаются файлом (бинарные данные), остальные форматы - структурированный текст.
+    MIME-тип, способ отдачи (файлом/текстом) и расширение файла
+    определяются самим отчетом (наследником abstract_report).
     """
     result = report.build(entity)
 
-    if report_type in DOWNLOAD_REPORT_TYPES:
-        file_name = f"report.{REPORT_FILE_EXTENSIONS[report_type]}"
+    if report.is_download:
+        file_name = f"report.{report.file_extension}"
 
         return Response(
             bytes(result.binary),
             status=200,
-            content_type=RESPONSE_CONTENT_TYPES.get(report_type, "application/octet-stream"),
+            content_type=report.content_type,
             headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
         )
 
     return Response(
         result.text,
         status=200,
-        content_type=RESPONSE_CONTENT_TYPES.get(report_type, "text/plain; charset=utf-8"),
+        content_type=report.content_type,
     )
 
 
@@ -168,7 +149,7 @@ def handle_get_report(format_value: str, type_value: str, code: str) -> Response
     except argument_exception:
         return create_error_response(f"Указанный формат '{format_value}' не поддерживается", 400)
 
-    return create_report_response(report, report_type, entity)
+    return create_report_response(report, entity)
 
 
 def handle_get_report_default(type_value: str, code: str) -> Response:
@@ -184,7 +165,7 @@ def handle_get_report_default(type_value: str, code: str) -> Response:
     except argument_exception:
         return create_error_response("Формат отчета, заданный в настройках, не поддерживается", 400)
 
-    return create_report_response(report, factory.settings.response_format, entity)
+    return create_report_response(report, entity)
 
 
 @app.route("/")

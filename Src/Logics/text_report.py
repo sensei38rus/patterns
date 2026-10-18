@@ -7,6 +7,13 @@ from Src.Logics.report_source_builder import report_source_builder
 """
 class text_report(abstract_report):
 
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого текстового отчета.
+        """
+        return "text/plain; charset=utf-8"
+
     """
     Переопределенный метод формирования отчета
     """
