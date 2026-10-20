@@ -1,0 +1,56 @@
+from Src.Core.abstract_report import abstract_report
+from Src.Dtos.report_result_dto import report_result_dto
+from Src.Logics.report_source_builder import report_source_builder
+
+"""
+Реализация отчета в формате CSV.
+Результат формируется в виде бинарных данных (кодировка UTF-8) для скачивания файла.
+"""
+class csv_report(abstract_report):
+
+    @property
+    def content_type(self) -> str:
+        """
+        MIME-тип содержимого CSV-отчета.
+        """
+        return "text/csv; charset=utf-8"
+
+    @property
+    def file_extension(self) -> str:
+        """
+        Расширение файла CSV-отчета.
+        """
+        return "csv"
+
+    """
+    Переопределенный метод формирования отчета
+    """
+    def build(self, source) -> report_result_dto:
+        table = report_source_builder.build(source)
+
+        header = ",".join(self.__escape(title) for key, title in table.columns)
+        data = ""
+
+        for row in table.rows:
+            data += "\n" + ",".join(self.__escape(row[key]) for key in table.keys)
+
+        result = report_result_dto()
+        result.binary = list(f"{header}{data}".encode("utf-8"))
+
+        return result
+
+    @staticmethod
+    def __escape(value) -> str:
+        """
+        Экранирование значения по правилам CSV: значения с разделителями
+        или кавычками заключаются в кавычки, внутренние кавычки удваиваются.
+        """
+        text = str(value)
+
+        if any(symbol in text for symbol in (",", '"', "\n", "\r")):
+            return f'"{text.replace(chr(34), chr(34) * 2)}"'
+
+        return text
+
+
+CsvReport = csv_report

@@ -3,9 +3,11 @@ import json
 from Src.Core.abstract_manager import abstract_manager
 from Src.Core.validator import validator, operation_exception
 from Src.Core.common import common
+from Src.Core.exception import argument_exception
 from Src.Models.settings_model import settings_model
 from Src.Models.organization_model import organization_model
-from Src.Models.range_model import range_model
+from Src.Dtos.report_type_enum import report_type_enum
+
 
 
 class settings_manager(abstract_manager):
@@ -18,29 +20,22 @@ class settings_manager(abstract_manager):
     _settings: settings_model = None
     __data: dict = None
 
-    @staticmethod
-    def create_killogramm() -> range_model:
-        """
-        Фабричный метод - создать килограмм (делегирует создание range_model).
-        """
-        return range_model.create_killogramm()
-
-    @staticmethod
-    def create_kilogram() -> range_model:
-        """
-        Фабричный метод - создать килограмм (делегирует создание range_model).
-        """
-        return range_model.create_kilogram()
-
-
-
     # Singleton
     def __new__(cls):
+        """
+        Реализация шаблона Singleton. Возвращает единственный экземпляр класса.
+        """
         if not hasattr(cls, "instance"):
             cls.instance = super(settings_manager, cls).__new__(cls)
-            cls.instance._settings = settings_model()
-            cls.instance.__data = {}
         return cls.instance
+
+    def __init__(self):
+        """
+        Конструктор менеджера настроек. Инициализирует поля модели настроек и данных.
+        """
+        if not hasattr(self, "_settings") or self._settings is None:
+            self._settings = settings_model()
+            self.__data = {}
 
     def load(self, file_name: str = "") -> None:
         """
@@ -84,7 +79,6 @@ class settings_manager(abstract_manager):
             company = self._settings.organization or organization_model()
             company_fields = common.get_fields(company, is_common=True)
 
-            # Вариант А: вложенный словарь {"organization": {...}} или {"company": {...}}
             org_data = self.__data.get("organization") or self.__data.get("company")
             if isinstance(org_data, dict):
                 for field in company_fields:
@@ -98,7 +92,6 @@ class settings_manager(abstract_manager):
                             except Exception:
                                 pass
 
-            # Вариант Б: плоские ключи вида "company_<field>" (например, "company_name", "company_inn")
             for field in company_fields:
                 key = f"company_{field}"
                 if key in self.__data:
@@ -109,14 +102,13 @@ class settings_manager(abstract_manager):
                         except Exception:
                             pass
 
-            # Если у компании есть обязательные поля (например, name), привязываем к настройкам
             if company.name:
                 self._settings.organization = company
 
             # 2. Загрузка данных настроек через рефлексию
             settings_fields = common.get_fields(self._settings, is_common=True)
             for field in settings_fields:
-                if field in ("organization", "company", "id", "name"):
+                if field in ("organization", "company", "id", "name", "response_format"):
                     continue
                 if field in self.__data:
                     val = self.__data[field]
@@ -132,10 +124,51 @@ class settings_manager(abstract_manager):
             elif "is_first_start" in self.__data:
                 self._settings.is_first_start = bool(self.__data.get("is_first_start"))
 
+            # Загрузка формата ответа
+            if "response_format" in self.__data:
+                self._settings.response_format = self.convert_report_type(self.__data["response_format"])
+
             return True
 
         except Exception:
             return False
+
+    @staticmethod
+    def convert_report_type(value) -> report_type_enum:
+        """
+        Преобразование произвольного формата (строки, числа, Enum) в report_type_enum.
+        Инкапсулирует логику разбора формата данных настроек.
+        """
+        if value is None:
+            raise argument_exception("report_type", "Тип отчета не может быть пустым!")
+        if isinstance(value, report_type_enum):
+            return value
+
+        candidates = [value]
+        if hasattr(value, "name"):
+            candidates.append(value.name)
+        if hasattr(value, "value"):
+            candidates.append(value.value)
+
+        aliases = {
+            "TEXT": report_type_enum.TXT,
+            "MD": report_type_enum.MARKDOWN,
+        }
+
+        for item in candidates:
+            if isinstance(item, int) or (isinstance(item, str) and str(item).strip().isdigit()):
+                try:
+                    return report_type_enum(int(item))
+                except ValueError:
+                    pass
+
+            key = str(item).strip().upper()
+            if key in report_type_enum.__members__:
+                return report_type_enum[key]
+            if key in aliases:
+                return aliases[key]
+
+        raise argument_exception("report_type", f"Указанный тип отчета '{value}' не реализован!")
 
     def convert(self) -> bool:
         """
@@ -159,9 +192,10 @@ class settings_manager(abstract_manager):
         )
 
         result.organization = company
-        result.boss_name = "Воловиков Александр Сергеевич"
-        result.account_name = "Балахчи Анна Георгиевна"
+        result.boss_name = "Иван Иванович Иванов"
+        result.account_name = "Сергей Сергеев Сергеевич"
         result.is_first_start = True
+        result.response_format = report_type_enum.HTML
         return result
 
     @property
