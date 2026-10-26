@@ -1,10 +1,24 @@
+import datetime
+import json
+
 from Src.Core.abstract_manager import abstract_manager
 from Src.Core.validator import validator
+from Src.Logics.convert_factory import convert_factory
 from Src.Logics.settings_manager import settings_manager
 from Src.Models.storage_model import storage_model
 from Src.Models.range_model import range_model
 from Src.Models.nomenclature_model import nomenclature_model
 from Src.Models.nomenclature_group_model import nomenclature_group_model
+
+
+def _json_default(value):
+    """
+    Кодировщик для значений, которые json не умеет сериализовать:
+    дата/время -> ISO-8601, остальное -> строковое представление.
+    """
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value.isoformat()
+    return str(value)
 
 
 class storage_manager(abstract_manager):
@@ -168,6 +182,32 @@ class storage_manager(abstract_manager):
             "nomenclatures": self._nomenclatures,
             "groups": self._groups
         }
+
+    def export_json(self, path: str) -> bool:
+        """
+        Выгрузить все данные хранилища в один JSON-файл.
+
+        Сущности конвертируются через convert_factory: ссылки заменяются
+        идентификаторами, значения остаются плоскими (без обёртки по типу),
+        каждая сущность попадает в файл ровно один раз.
+
+        :param path: Путь к файлу для записи
+        :return: True, если выгрузка выполнена; False при ошибке записи
+        """
+        try:
+            factory = convert_factory()
+            visited = set()
+            entities = []
+
+            for collection in self.data.values():
+                for item in collection.values():
+                    entities.extend(factory.convert(item, visited))
+
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(entities, file, ensure_ascii=False, indent=2, default=_json_default)
+            return True
+        except Exception:
+            return False
 
     @property
     def is_initialized(self) -> bool:
