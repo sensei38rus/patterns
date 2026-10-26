@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from Src.Logics.storage_manager import storage_manager
 from Src.Logics.settings_manager import settings_manager
@@ -356,3 +358,102 @@ def test_empty_storage_manager_convert_is_first_start_false():
     finally:
         if hasattr(storage_manager, 'instance'):
             del storage_manager.instance
+
+
+# 5. Проверка выгрузки JSON в один файл
+
+
+def test_success_storage_manager_export_json_single_file(tmp_path):
+    """
+    Ожидание: Все данные выгружаются в один JSON-файл.
+    Метод: storage_manager.export_json
+    Описание: Файл содержит плоский список сущностей всех коллекций;
+              ссылки заменены идентификаторами, значения без обёртки
+              {int: ...}, каждая сущность встречается ровно один раз.
+    """
+    # Подготовка
+    if hasattr(storage_manager, 'instance'):
+        del storage_manager.instance
+
+    manager = storage_manager()
+    manager.convert()
+
+    path = tmp_path / "storage_data.json"
+
+    # Действие
+    result = manager.export_json(str(path))
+
+    # Проверки
+    assert result == True
+    assert path.exists()
+
+    with path.open(encoding="utf-8") as file:
+        entities = json.load(file)
+
+    assert isinstance(entities, list)
+    assert len(entities) > 0
+
+    ids = [entity["id"] for entity in entities]
+    assert len(ids) == len(set(ids))
+
+    names = {entity.get("name") for entity in entities}
+    assert "килограмм" in names
+    assert "грамм" in names
+    assert "Основной склад" in names
+    assert "Бакалея" in names
+
+
+def test_success_storage_manager_export_json_flat_values(tmp_path):
+    """
+    Ожидание: Значения полей выгружаются плоскими, без обёртки по типу.
+    Метод: storage_manager.export_json
+    Описание: У единицы измерения "килограмм" coefficient/conversion_factor/value
+              — числа 1000, name/id — строки, base — идентификатор грамма.
+    """
+    # Подготовка
+    if hasattr(storage_manager, 'instance'):
+        del storage_manager.instance
+
+    manager = storage_manager()
+    manager.convert()
+
+    path = tmp_path / "storage_data.json"
+    manager.export_json(str(path))
+
+    # Действие
+    with path.open(encoding="utf-8") as file:
+        entities = json.load(file)
+
+    # Проверки
+    kilogram = next(e for e in entities if e.get("name") == "килограмм")
+    gram = next(e for e in entities if e.get("name") == "грамм")
+
+    assert kilogram["coefficient"] == 1000
+    assert kilogram["conversion_factor"] == 1000
+    assert kilogram["value"] == 1000
+    assert isinstance(kilogram["id"], str)
+    assert isinstance(kilogram["name"], str)
+    assert kilogram["base"] == gram["id"]
+    assert kilogram["base_range"] == gram["id"]
+
+    assert gram["coefficient"] == 1
+    assert gram["base"] is None
+    assert gram["base_range"] is None
+
+
+def test_false_storage_manager_export_json_invalid_path():
+    """
+    Ожидание: Некорректный путь выгрузки возвращает False.
+    Метод: storage_manager.export_json
+    Описание: Запись в несуществующий каталог завершается ошибкой,
+              метод не выбрасывает исключение и возвращает False.
+    """
+    # Подготовка
+    if hasattr(storage_manager, 'instance'):
+        del storage_manager.instance
+
+    manager = storage_manager()
+    manager.convert()
+
+    # Действие и проверки
+    assert manager.export_json("/несуществующий_каталог_12345/storage.json") == False

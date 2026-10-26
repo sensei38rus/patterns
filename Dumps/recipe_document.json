@@ -1,0 +1,478 @@
+[
+  {
+    "cooking_time": 30,
+    "description": "Подавать горячими по 3 штуки на порцию, не ниже 65 градусов; при доставке — в бумажной коробке.",
+    "id": "48b4aabd-cd8f-4306-a77a-79537f75c76a",
+    "is_composite": true,
+    "items": [
+      "12bbca0b-ec78-4886-8aee-ee1f84a46e0d",
+      "5207e0f4-0882-485a-b2b3-78e8b8502622",
+      "7ae26161-20d5-4276-9a46-b5fb6ef5254f"
+    ],
+    "name": "Сырники из творога классические",
+    "pieces": 6,
+    "portions": 2,
+    "steps": [
+      "ce39f770-52e4-44c7-b315-4df4bf3f88d8",
+      "de2c0a65-6fa7-465c-8707-d189c2fffcfe"
+    ],
+    "sub_recipes": [
+      "e797dc82-37cc-4a69-a322-254efd718d1f"
+    ],
+    "unique_code": "48b4aabd-cd8f-4306-a77a-79537f75c76a",
+    "weight_brutto": 404,
+    "weight_netto": 403
+  },
+  {
+    "id": "12bbca0b-ec78-4886-8aee-ee1f84a46e0d",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "effdc26a-5bf1-4663-af7c-1c3063b30f67",
+    "note": "На подпыл при формовке",
+    "quantity": 20,
+    "range": "71905fd9-decd-4200-98df-566e3d983c64",
+    "storage": "a720e1c3-3a4f-4ab8-9105-be357cec480d",
+    "unique_code": "12bbca0b-ec78-4886-8aee-ee1f84a46e0d",
+    "weight": 20
+  },
+  {
+    "full_name": "Мука пшеничная высший сорт",
+    "group": "85b0af37-7bad-43ea-ba74-44dc88903301",
+    "id": "effdc26a-5bf1-4663-af7c-1c3063b30f67",
+    "name": "Мука пшеничная",
+    "range": "c9c32495-43bc-4f7d-86cb-b0e174596adf",
+    "unique_code": "effdc26a-5bf1-4663-af7c-1c3063b30f67"
+  },
+  {
+    "id": "85b0af37-7bad-43ea-ba74-44dc88903301",
+    "name": "Бакалея",
+    "unique_code": "85b0af37-7bad-43ea-ba74-44dc88903301"
+  },
+  {
+    "base": "7ddda6f4-c2b3-434a-9468-0ffa7604b264",
+    "base_range": "7ddda6f4-c2b3-434a-9468-0ffa7604b264",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "c9c32495-43bc-4f7d-86cb-b0e174596adf",
+    "name": "килограмм",
+    "unique_code": "c9c32495-43bc-4f7d-86cb-b0e174596adf",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "7ddda6f4-c2b3-434a-9468-0ffa7604b264",
+    "name": "грамм",
+    "unique_code": "7ddda6f4-c2b3-434a-9468-0ffa7604b264",
+    "value": 1
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "71905fd9-decd-4200-98df-566e3d983c64",
+    "name": "грамм",
+    "unique_code": "71905fd9-decd-4200-98df-566e3d983c64",
+    "value": 1
+  },
+  {
+    "address": "ул. Промышленная, 5, пом. 101",
+    "id": "a720e1c3-3a4f-4ab8-9105-be357cec480d",
+    "name": "Основной склад",
+    "unique_code": "a720e1c3-3a4f-4ab8-9105-be357cec480d"
+  },
+  {
+    "id": "5207e0f4-0882-485a-b2b3-78e8b8502622",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "21c60913-1769-4d76-b985-e88d63671328",
+    "note": "",
+    "quantity": 20,
+    "range": "feda734b-56c7-4b98-a584-149439211656",
+    "storage": "a720e1c3-3a4f-4ab8-9105-be357cec480d",
+    "unique_code": "5207e0f4-0882-485a-b2b3-78e8b8502622",
+    "weight": 20
+  },
+  {
+    "full_name": "Масло подсолнечное рафинированное",
+    "group": "b8232f33-e5c4-4db7-abc9-ee930a8b760d",
+    "id": "21c60913-1769-4d76-b985-e88d63671328",
+    "name": "Масло подсолнечное",
+    "range": "a3eea2e2-c865-42f4-af36-72d14cc541ee",
+    "unique_code": "21c60913-1769-4d76-b985-e88d63671328"
+  },
+  {
+    "id": "b8232f33-e5c4-4db7-abc9-ee930a8b760d",
+    "name": "Бакалея",
+    "unique_code": "b8232f33-e5c4-4db7-abc9-ee930a8b760d"
+  },
+  {
+    "base": "aafd6ef9-4082-45d8-9ff8-2d997c9d89f6",
+    "base_range": "aafd6ef9-4082-45d8-9ff8-2d997c9d89f6",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "a3eea2e2-c865-42f4-af36-72d14cc541ee",
+    "name": "литр",
+    "unique_code": "a3eea2e2-c865-42f4-af36-72d14cc541ee",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "aafd6ef9-4082-45d8-9ff8-2d997c9d89f6",
+    "name": "миллилитр",
+    "unique_code": "aafd6ef9-4082-45d8-9ff8-2d997c9d89f6",
+    "value": 1
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "feda734b-56c7-4b98-a584-149439211656",
+    "name": "миллилитр",
+    "unique_code": "feda734b-56c7-4b98-a584-149439211656",
+    "value": 1
+  },
+  {
+    "id": "7ae26161-20d5-4276-9a46-b5fb6ef5254f",
+    "is_packaging": true,
+    "name": "",
+    "nomenclature": "c30ed131-9690-45ac-b2cd-c345cdfb51b7",
+    "note": "Одноразовая упаковка для доставки",
+    "quantity": 1,
+    "range": "52ecebd7-8367-4c7f-82bd-b5d468a5bbef",
+    "storage": "a720e1c3-3a4f-4ab8-9105-be357cec480d",
+    "unique_code": "7ae26161-20d5-4276-9a46-b5fb6ef5254f",
+    "weight": 1
+  },
+  {
+    "full_name": "Коробка бумажная для завтраков",
+    "group": "3789a462-f651-49e8-abe9-a4e42d2118e2",
+    "id": "c30ed131-9690-45ac-b2cd-c345cdfb51b7",
+    "name": "Коробка для завтраков",
+    "range": "f5b4e28c-9b94-4bc4-a23a-08ac87d14234",
+    "unique_code": "c30ed131-9690-45ac-b2cd-c345cdfb51b7"
+  },
+  {
+    "id": "3789a462-f651-49e8-abe9-a4e42d2118e2",
+    "name": "Упаковка",
+    "unique_code": "3789a462-f651-49e8-abe9-a4e42d2118e2"
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "f5b4e28c-9b94-4bc4-a23a-08ac87d14234",
+    "name": "штука",
+    "unique_code": "f5b4e28c-9b94-4bc4-a23a-08ac87d14234",
+    "value": 1
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "52ecebd7-8367-4c7f-82bd-b5d468a5bbef",
+    "name": "штука",
+    "unique_code": "52ecebd7-8367-4c7f-82bd-b5d468a5bbef",
+    "value": 1
+  },
+  {
+    "description": "Проверить сроки годности, муку просеять, творог протереть через сито.",
+    "id": "ce39f770-52e4-44c7-b315-4df4bf3f88d8",
+    "name": "Подготовка сырья",
+    "order": 1,
+    "unique_code": "ce39f770-52e4-44c7-b315-4df4bf3f88d8"
+  },
+  {
+    "description": "Сформовать сырники, обжарить по 2-3 минуты с каждой стороны до золотистой корочки.",
+    "id": "de2c0a65-6fa7-465c-8707-d189c2fffcfe",
+    "name": "Формовка и тепловая обработка",
+    "order": 2,
+    "unique_code": "de2c0a65-6fa7-465c-8707-d189c2fffcfe"
+  },
+  {
+    "cooking_time": 10,
+    "description": "Полуфабрикат для сырников.",
+    "id": "e797dc82-37cc-4a69-a322-254efd718d1f",
+    "is_composite": false,
+    "items": [
+      "9f62e96a-14f7-4d7d-acb7-37959470dc6b",
+      "39381a32-8fc9-4cfa-9716-a7af71172d70",
+      "31cd6e35-0c60-4723-8d60-5b81b8ee7d5b",
+      "f8b03f0e-4224-4bf6-a15b-3b52aedf3910",
+      "859da719-843d-4e35-a5c3-8d4132e58feb"
+    ],
+    "name": "Творожная масса",
+    "pieces": 6,
+    "portions": 2,
+    "steps": [
+      "e5293d6c-39cb-4e1c-82c5-0d350e01a534"
+    ],
+    "sub_recipes": [],
+    "unique_code": "e797dc82-37cc-4a69-a322-254efd718d1f",
+    "weight_brutto": 363,
+    "weight_netto": 363
+  },
+  {
+    "id": "9f62e96a-14f7-4d7d-acb7-37959470dc6b",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "7627d399-206f-4015-9332-77791c5fad45",
+    "note": "",
+    "quantity": 300,
+    "range": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "storage": "1fa87226-bbd3-420a-b883-9d5e10507613",
+    "unique_code": "9f62e96a-14f7-4d7d-acb7-37959470dc6b",
+    "weight": 300
+  },
+  {
+    "full_name": "Творог 9% протёртый",
+    "group": "b845fb74-a0b5-431c-8d54-cbcdf2cae1dc",
+    "id": "7627d399-206f-4015-9332-77791c5fad45",
+    "name": "Творог 9%",
+    "range": "d93927ca-299d-48e0-89ed-b5e39b05ce9a",
+    "unique_code": "7627d399-206f-4015-9332-77791c5fad45"
+  },
+  {
+    "id": "b845fb74-a0b5-431c-8d54-cbcdf2cae1dc",
+    "name": "Молочные продукты",
+    "unique_code": "b845fb74-a0b5-431c-8d54-cbcdf2cae1dc"
+  },
+  {
+    "base": "734f8c15-8afa-4acf-9f58-9f904550252e",
+    "base_range": "734f8c15-8afa-4acf-9f58-9f904550252e",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "d93927ca-299d-48e0-89ed-b5e39b05ce9a",
+    "name": "килограмм",
+    "unique_code": "d93927ca-299d-48e0-89ed-b5e39b05ce9a",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "734f8c15-8afa-4acf-9f58-9f904550252e",
+    "name": "грамм",
+    "unique_code": "734f8c15-8afa-4acf-9f58-9f904550252e",
+    "value": 1
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "name": "грамм",
+    "unique_code": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "value": 1
+  },
+  {
+    "address": "ул. Промышленная, 5, пом. 102",
+    "id": "1fa87226-bbd3-420a-b883-9d5e10507613",
+    "name": "Холодильник цеха",
+    "unique_code": "1fa87226-bbd3-420a-b883-9d5e10507613"
+  },
+  {
+    "id": "39381a32-8fc9-4cfa-9716-a7af71172d70",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "719c9186-fbee-4208-b96b-1f079d86addd",
+    "note": "",
+    "quantity": 1,
+    "range": "4bb6fdd3-9d8a-4c84-8742-9534fd341cad",
+    "storage": "1fa87226-bbd3-420a-b883-9d5e10507613",
+    "unique_code": "39381a32-8fc9-4cfa-9716-a7af71172d70",
+    "weight": 1
+  },
+  {
+    "full_name": "Яйца куриные столовые С0",
+    "group": "8a1b8034-dfb5-44bd-87a6-421bd3154774",
+    "id": "719c9186-fbee-4208-b96b-1f079d86addd",
+    "name": "Яйца куриные",
+    "range": "8e65f2ed-4ee7-4f4d-8fce-9e3a98898559",
+    "unique_code": "719c9186-fbee-4208-b96b-1f079d86addd"
+  },
+  {
+    "id": "8a1b8034-dfb5-44bd-87a6-421bd3154774",
+    "name": "Молочные продукты",
+    "unique_code": "8a1b8034-dfb5-44bd-87a6-421bd3154774"
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "8e65f2ed-4ee7-4f4d-8fce-9e3a98898559",
+    "name": "штука",
+    "unique_code": "8e65f2ed-4ee7-4f4d-8fce-9e3a98898559",
+    "value": 1
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "4bb6fdd3-9d8a-4c84-8742-9534fd341cad",
+    "name": "штука",
+    "unique_code": "4bb6fdd3-9d8a-4c84-8742-9534fd341cad",
+    "value": 1
+  },
+  {
+    "id": "31cd6e35-0c60-4723-8d60-5b81b8ee7d5b",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "a90abf52-1526-4bac-931e-f0916760f39b",
+    "note": "",
+    "quantity": 30,
+    "range": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "storage": "77d8192a-613f-4006-b58e-874d2f21f3e1",
+    "unique_code": "31cd6e35-0c60-4723-8d60-5b81b8ee7d5b",
+    "weight": 30
+  },
+  {
+    "full_name": "Сахар белый кристаллический",
+    "group": "6383b332-e820-4c3f-84af-fc7e5bc4c784",
+    "id": "a90abf52-1526-4bac-931e-f0916760f39b",
+    "name": "Сахар",
+    "range": "a55018b2-39bb-485d-b0c0-34a1035fd584",
+    "unique_code": "a90abf52-1526-4bac-931e-f0916760f39b"
+  },
+  {
+    "id": "6383b332-e820-4c3f-84af-fc7e5bc4c784",
+    "name": "Бакалея",
+    "unique_code": "6383b332-e820-4c3f-84af-fc7e5bc4c784"
+  },
+  {
+    "base": "eb9be206-8c58-4e34-b835-3e35efee093f",
+    "base_range": "eb9be206-8c58-4e34-b835-3e35efee093f",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "a55018b2-39bb-485d-b0c0-34a1035fd584",
+    "name": "килограмм",
+    "unique_code": "a55018b2-39bb-485d-b0c0-34a1035fd584",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "eb9be206-8c58-4e34-b835-3e35efee093f",
+    "name": "грамм",
+    "unique_code": "eb9be206-8c58-4e34-b835-3e35efee093f",
+    "value": 1
+  },
+  {
+    "address": "ул. Промышленная, 5, пом. 101",
+    "id": "77d8192a-613f-4006-b58e-874d2f21f3e1",
+    "name": "Основной склад",
+    "unique_code": "77d8192a-613f-4006-b58e-874d2f21f3e1"
+  },
+  {
+    "id": "f8b03f0e-4224-4bf6-a15b-3b52aedf3910",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "bfdae15a-9b60-4967-8824-07c15f72f24b",
+    "note": "",
+    "quantity": 2,
+    "range": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "storage": "77d8192a-613f-4006-b58e-874d2f21f3e1",
+    "unique_code": "f8b03f0e-4224-4bf6-a15b-3b52aedf3910",
+    "weight": 2
+  },
+  {
+    "full_name": "Соль поваренная пищевая",
+    "group": "e1b6ad8c-378a-41f1-974f-c01afa879871",
+    "id": "bfdae15a-9b60-4967-8824-07c15f72f24b",
+    "name": "Соль",
+    "range": "74729017-9466-4264-9a49-068b77714f29",
+    "unique_code": "bfdae15a-9b60-4967-8824-07c15f72f24b"
+  },
+  {
+    "id": "e1b6ad8c-378a-41f1-974f-c01afa879871",
+    "name": "Бакалея",
+    "unique_code": "e1b6ad8c-378a-41f1-974f-c01afa879871"
+  },
+  {
+    "base": "507fb188-dfbd-4e86-a5c7-f0166132ca07",
+    "base_range": "507fb188-dfbd-4e86-a5c7-f0166132ca07",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "74729017-9466-4264-9a49-068b77714f29",
+    "name": "килограмм",
+    "unique_code": "74729017-9466-4264-9a49-068b77714f29",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "507fb188-dfbd-4e86-a5c7-f0166132ca07",
+    "name": "грамм",
+    "unique_code": "507fb188-dfbd-4e86-a5c7-f0166132ca07",
+    "value": 1
+  },
+  {
+    "id": "859da719-843d-4e35-a5c3-8d4132e58feb",
+    "is_packaging": false,
+    "name": "",
+    "nomenclature": "51ed8b15-b4f8-48ed-8d5b-4e505b3b937c",
+    "note": "В тесто",
+    "quantity": 30,
+    "range": "7991ed7b-b1fc-400e-9aa4-6567789cfcfc",
+    "storage": "77d8192a-613f-4006-b58e-874d2f21f3e1",
+    "unique_code": "859da719-843d-4e35-a5c3-8d4132e58feb",
+    "weight": 30
+  },
+  {
+    "full_name": "Мука пшеничная высший сорт",
+    "group": "4545f5df-4d62-4d09-84f0-f5c85f523434",
+    "id": "51ed8b15-b4f8-48ed-8d5b-4e505b3b937c",
+    "name": "Мука пшеничная",
+    "range": "122c3c3a-cfeb-4099-9550-b9ff487f4845",
+    "unique_code": "51ed8b15-b4f8-48ed-8d5b-4e505b3b937c"
+  },
+  {
+    "id": "4545f5df-4d62-4d09-84f0-f5c85f523434",
+    "name": "Бакалея",
+    "unique_code": "4545f5df-4d62-4d09-84f0-f5c85f523434"
+  },
+  {
+    "base": "f1c2ca42-f84e-4a68-a47a-32948729ca6a",
+    "base_range": "f1c2ca42-f84e-4a68-a47a-32948729ca6a",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "122c3c3a-cfeb-4099-9550-b9ff487f4845",
+    "name": "килограмм",
+    "unique_code": "122c3c3a-cfeb-4099-9550-b9ff487f4845",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "f1c2ca42-f84e-4a68-a47a-32948729ca6a",
+    "name": "грамм",
+    "unique_code": "f1c2ca42-f84e-4a68-a47a-32948729ca6a",
+    "value": 1
+  },
+  {
+    "description": "Перетереть творог с яйцом, сахаром и солью, ввести муку и вымесить однородное тесто.",
+    "id": "e5293d6c-39cb-4e1c-82c5-0d350e01a534",
+    "name": "Замес творожной массы",
+    "order": 1,
+    "unique_code": "e5293d6c-39cb-4e1c-82c5-0d350e01a534"
+  }
+]

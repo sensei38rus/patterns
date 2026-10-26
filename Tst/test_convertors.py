@@ -99,13 +99,13 @@ def test_success_basic_convertor_not_convertable_foreign_values(value):
     assert convertor.convertable(value) is False
 
 
-@pytest.mark.parametrize("value, expected_key", [(-7, "int"), (0, "int"), (42, "int")])
-def test_success_basic_convertor_convert_integer_value(value, expected_key):
+@pytest.mark.parametrize("value", [-7, 0, 42])
+def test_success_basic_convertor_convert_integer_value(value):
     """
-    Ожидание: Словарь вида {имя_типа: значение} для целого числа.
+    Ожидание: Целое число конвертируется в плоское значение без обёртки.
     Метод: basic_convertor.Convert
-    Описание: Целочисленное значение конвертируется в словарь
-              с ключом - именем типа источника.
+    Описание: Источник возвращается как есть — значение без словаря
+              вида {имя_типа: значение}.
     """
     # Arrange
     convertor = basic_convertor()
@@ -114,16 +114,16 @@ def test_success_basic_convertor_convert_integer_value(value, expected_key):
     result = convertor.Convert(value)
 
     # Assert
-    assert result == {expected_key: value}
+    assert result == value
 
 
 @pytest.mark.parametrize("value", [-7.5, 0.0, 3.14])
 def test_success_basic_convertor_convert_float_value(value):
     """
-    Ожидание: Словарь вида {float: значение} для вещественного числа.
+    Ожидание: Вещественное число конвертируется в плоское значение без обёртки.
     Метод: basic_convertor.Convert
-    Описание: Вещественное значение конвертируется в словарь
-              с ключом - именем типа источника.
+    Описание: Источник возвращается как есть — значение без словаря
+              вида {имя_типа: значение}.
     """
     # Arrange
     convertor = basic_convertor()
@@ -132,16 +132,16 @@ def test_success_basic_convertor_convert_float_value(value):
     result = convertor.Convert(value)
 
     # Assert
-    assert result == {"float": value}
+    assert result == value
 
 
 @pytest.mark.parametrize("value", ["", "грамм", "сырники"])
 def test_success_basic_convertor_convert_str_value(value):
     """
-    Ожидание: Словарь вида {str: значение} для строки.
+    Ожидание: Строка конвертируется в плоское значение без обёртки.
     Метод: basic_convertor.Convert
-    Описание: Строковое значение конвертируется в словарь
-              с ключом - именем типа источника.
+    Описание: Источник возвращается как есть — значение без словаря
+              вида {имя_типа: значение}.
     """
     # Arrange
     convertor = basic_convertor()
@@ -150,7 +150,7 @@ def test_success_basic_convertor_convert_str_value(value):
     result = convertor.Convert(value)
 
     # Assert
-    assert result == {"str": value}
+    assert result == value
 
 
 def test_error_basic_convertor_convert_none_value():
@@ -227,10 +227,10 @@ def test_success_datetime_convertor_not_convertable_date_value():
 
 def test_success_datetime_convertor_convert_datetime_value():
     """
-    Ожидание: Словарь вида {datetime: значение}.
+    Ожидание: Значение datetime конвертируется в плоское значение без обёртки.
     Метод: datetime_convertor.Convert
-    Описание: Значение datetime.datetime конвертируется в словарь
-              с ключом - именем типа источника.
+    Описание: Источник возвращается как есть — значение без словаря
+              вида {имя_типа: значение}.
     """
     # Arrange
     convertor = datetime_convertor()
@@ -240,7 +240,7 @@ def test_success_datetime_convertor_convert_datetime_value():
     result = convertor.Convert(value)
 
     # Assert
-    assert result == {"datetime": value}
+    assert result == value
 
 
 def test_error_datetime_convertor_convert_date_value():

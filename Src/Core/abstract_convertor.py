@@ -15,5 +15,5 @@ class abstract_convertor(ABC):
         pass
 
     @abstractmethod
-    def Convert(self, source: object) -> dict:
+    def Convert(self, source: object) -> object:
         pass

@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 
+from Src.Core.abstract_convert_factory import abstract_convert_factory, AbstractConvertFactory
 from Src.Core.abstract_convertor import abstract_convertor
 from Src.Core.abstract_model import abs_mod
 from Src.Core.exception import argument_exception
@@ -63,13 +64,13 @@ class broken_model(abs_mod):
         raise RuntimeError("сбой чтения свойства")
 
 
-@pytest.mark.parametrize("value, expected", [(-7, {"int": -7}), (0, {"int": 0}), (42, {"int": 42})])
-def test_success_convert_factory_convert_integer_value(value, expected):
+@pytest.mark.parametrize("value", [-7, 0, 42])
+def test_success_convert_factory_convert_integer_value(value):
     """
-    Ожидание: Набор из одного словаря для целого числа.
+    Ожидание: Набор из одного плоского значения для целого числа.
     Метод: convert_factory.convert
     Описание: Целочисленный источник конвертируется базовым конвертером
-              в словарь вида {имя_типа: значение}.
+              и возвращается без обёртки {имя_типа: значение}.
     """
     # Arrange
     factory = convert_factory()
@@ -78,15 +79,16 @@ def test_success_convert_factory_convert_integer_value(value, expected):
     result = factory.convert(value)
 
     # Assert
-    assert result == [expected]
+    assert result == [value]
 
 
-@pytest.mark.parametrize("value, expected", [(-7.5, {"float": -7.5}), (3.14, {"float": 3.14})])
-def test_success_convert_factory_convert_float_value(value, expected):
+@pytest.mark.parametrize("value", [-7.5, 3.14])
+def test_success_convert_factory_convert_float_value(value):
     """
-    Ожидание: Набор из одного словаря для вещественного числа.
+    Ожидание: Набор из одного плоского значения для вещественного числа.
     Метод: convert_factory.convert
-    Описание: Вещественный источник конвертируется базовым конвертером.
+    Описание: Вещественный источник конвертируется базовым конвертером
+              без обёртки {имя_типа: значение}.
     """
     # Arrange
     factory = convert_factory()
@@ -95,14 +97,15 @@ def test_success_convert_factory_convert_float_value(value, expected):
     result = factory.convert(value)
 
     # Assert
-    assert result == [expected]
+    assert result == [value]
 
 
 def test_success_convert_factory_convert_str_value():
     """
-    Ожидание: Набор из одного словаря для строки.
+    Ожидание: Набор из одного плоского значения для строки.
     Метод: convert_factory.convert
-    Описание: Строковый источник конвертируется базовым конвертером.
+    Описание: Строковый источник конвертируется базовым конвертером
+              без обёртки {имя_типа: значение}.
     """
     # Arrange
     factory = convert_factory()
@@ -111,14 +114,15 @@ def test_success_convert_factory_convert_str_value():
     result = factory.convert("грамм")
 
     # Assert
-    assert result == [{"str": "грамм"}]
+    assert result == ["грамм"]
 
 
 def test_success_convert_factory_convert_datetime_value():
     """
-    Ожидание: Набор из одного словаря для даты и времени.
+    Ожидание: Набор из одного плоского значения для даты и времени.
     Метод: convert_factory.convert
-    Описание: Источник типа datetime конвертируется конвертером даты и времени.
+    Описание: Источник типа datetime конвертируется конвертером даты и времени
+              без обёртки {имя_типа: значение}.
     """
     # Arrange
     factory = convert_factory()
@@ -128,15 +132,15 @@ def test_success_convert_factory_convert_datetime_value():
     result = factory.convert(value)
 
     # Assert
-    assert result == [{"datetime": value}]
+    assert result == [value]
 
 
 def test_success_convert_factory_convert_list_of_values():
     """
-    Ожидание: Набор словарей для каждого элемента списка.
+    Ожидание: Набор плоских значений для каждого элемента списка.
     Метод: convert_factory.convert
     Описание: Список примитивов и дат конвертируется поэлементно,
-              порядок элементов сохраняется.
+              порядок элементов сохраняется, обёртки по типу отсутствуют.
     """
     # Arrange
     factory = convert_factory()
@@ -146,20 +150,15 @@ def test_success_convert_factory_convert_list_of_values():
     result = factory.convert([1, "два", moment, 4.0])
 
     # Assert
-    assert result == [
-        {"int": 1},
-        {"str": "два"},
-        {"datetime": moment},
-        {"float": 4.0},
-    ]
+    assert result == [1, "два", moment, 4.0]
 
 
 def test_success_convert_factory_convert_model_fields():
     """
     Ожидание: Набор из одного словаря с полями модели без вложенных ссылок.
     Метод: convert_factory.convert
-    Описание: Все property-поля модели попадают в словарь; примитивные
-              значения конвертируются базовым конвертером, ссылка base_range
+    Описание: Все property-поля модели попадают в словарь плоскими значениями
+              (без обёртки {имя_типа: значение}); ссылка base_range
               у базовой единицы остаётся пустой (None).
     """
     # Arrange
@@ -171,12 +170,12 @@ def test_success_convert_factory_convert_model_fields():
 
     # Assert
     assert len(result) == 1
-    assert result[0]["name"] == {"str": "грамм"}
-    assert result[0]["conversion_factor"] == {"int": 1}
-    assert result[0]["coefficient"] == {"int": 1}
-    assert result[0]["value"] == {"int": 1}
-    assert result[0]["id"] == {"str": model.id}
-    assert result[0]["unique_code"] == {"str": model.id}
+    assert result[0]["name"] == "грамм"
+    assert result[0]["conversion_factor"] == 1
+    assert result[0]["coefficient"] == 1
+    assert result[0]["value"] == 1
+    assert result[0]["id"] == model.id
+    assert result[0]["unique_code"] == model.id
     assert result[0]["base_range"] is None
     assert result[0]["base"] is None
 
@@ -187,7 +186,7 @@ def test_success_convert_factory_convert_nested_reference():
     Метод: convert_factory.convert
     Описание: Ссылочное поле заменяется идентификатором в словаре родителя,
               а сама вложенная модель добавляется отдельным словарём после
-              словаря родителя.
+              словаря родителя; значения плоские, без обёртки по типу.
     """
     # Arrange
     factory = convert_factory()
@@ -203,11 +202,11 @@ def test_success_convert_factory_convert_nested_reference():
     child = result[1]
     assert parent["base_range"] == model.base_range.id
     assert parent["base"] == model.base_range.id
-    assert parent["name"] == {"str": "килограмм"}
-    assert parent["conversion_factor"] == {"int": 1000}
+    assert parent["name"] == "килограмм"
+    assert parent["conversion_factor"] == 1000
 
-    assert child["name"] == {"str": "грамм"}
-    assert child["conversion_factor"] == {"int": 1}
+    assert child["name"] == "грамм"
+    assert child["conversion_factor"] == 1
     assert child["base_range"] is None
     assert child["base"] is None
 
@@ -216,8 +215,8 @@ def test_success_convert_factory_convert_document_structure():
     """
     Ожидание: Набор словарей, повторяющих исходную структуру документа.
     Метод: convert_factory.convert
-    Описание: Словарь документа содержит поля с конвертированными значениями
-              (дата, примитивы, теги) и идентификаторы ссылок; каждая модель
+    Описание: Словарь документа содержит плоские значения полей (дата,
+              примитивы, теги) и идентификаторы ссылок; каждая модель
               из списка ссылок добавляется отдельным словарём в порядке списка.
     """
     # Arrange
@@ -233,15 +232,15 @@ def test_success_convert_factory_convert_document_structure():
     assert len(result) == 3
 
     document_fields = result[0]
-    assert document_fields["name"] == {"str": "Документ"}
-    assert document_fields["line_count"] == {"int": 3}
-    assert document_fields["created_at"] == {"datetime": datetime.datetime(2026, 10, 24, 12, 30, 0)}
-    assert document_fields["tags"] == [{"str": "срочно"}, {"str": "гарячее"}]
+    assert document_fields["name"] == "Документ"
+    assert document_fields["line_count"] == 3
+    assert document_fields["created_at"] == datetime.datetime(2026, 10, 24, 12, 30, 0)
+    assert document_fields["tags"] == ["срочно", "гарячее"]
     assert document_fields["base_range"] is None
     assert document_fields["ranges"] == [first.id, second.id]
 
-    assert result[1]["name"] == {"str": "грамм"}
-    assert result[2]["name"] == {"str": "килограмм"}
+    assert result[1]["name"] == "грамм"
+    assert result[2]["name"] == "килограмм"
 
 
 def test_success_convert_factory_convert_cyclic_reference():
@@ -286,12 +285,12 @@ def test_success_convert_factory_convert_dict_source():
     # Assert
     assert len(result) == 2
     assert result[0] == {
-        "count": {"int": 5},
-        "title": {"str": "сырники"},
-        "moment": {"datetime": moment},
+        "count": 5,
+        "title": "сырники",
+        "moment": moment,
         "range": model.id,
     }
-    assert result[1]["name"] == {"str": "грамм"}
+    assert result[1]["name"] == "грамм"
 
 
 def test_error_convert_factory_convert_none():
@@ -373,7 +372,79 @@ def test_success_convert_factory_alias_available():
     """
     Ожидание: Алиас ConvertFactory указывает на convert_factory.
     Метод: convert_factory (алиас ConvertFactory)
-    Описание: ПascalCase-имя класса сохранено для совместимости.
+    Описание: PascalCase-имя класса сохранено для совместимости.
     """
     # Arrange, Act & Assert
     assert ConvertFactory is convert_factory
+
+
+def test_error_abstract_convert_factory_create_instance():
+    """
+    Ожидание: Нельзя создать экземпляр абстрактной фабрики конвертеров.
+    Метод: abstract_convert_factory.__init__
+    Описание: Абстрактный класс содержит абстрактный метод create_convertors,
+              поэтому его инстанцирование завершается исключением TypeError.
+    """
+    # Arrange, Act & Assert
+    with pytest.raises(TypeError):
+        abstract_convert_factory()
+
+
+def test_success_convert_factory_is_abstract_convert_factory():
+    """
+    Ожидание: convert_factory наследуется от абстрактной фабрики конвертеров.
+    Метод: isinstance
+    Описание: convert_factory реализует контракт abstract_convert_factory.
+    """
+    # Arrange
+    factory = convert_factory()
+
+    # Act & Assert
+    assert isinstance(factory, abstract_convert_factory)
+
+
+def test_success_convert_factory_create_convertors_family():
+    """
+    Ожидание: create_convertors возвращает семейство связанных конвертеров.
+    Метод: convert_factory.create_convertors
+    Описание: Семейство состоит из basic_convertor, datetime_convertor
+              и reference_convertor — всех трех поддерживаемых типов.
+    """
+    # Arrange
+    factory = convert_factory()
+
+    # Act
+    convertors = factory.create_convertors()
+
+    # Assert
+    assert len(convertors) == 3
+    assert isinstance(convertors[0], basic_convertor)
+    assert isinstance(convertors[1], datetime_convertor)
+    assert isinstance(convertors[2], reference_convertor)
+
+
+def test_success_convert_factory_is_convertor_user_family():
+    """
+    Ожидание: Все конвертеры семейства наследуются от abstract_convertor.
+    Метод: convert_factory.create_convertors
+    Описание: Семейство фабрики состоит только из подклассов абстрактного конвертера.
+    """
+    # Arrange
+    factory = convert_factory()
+
+    # Act
+    convertors = factory.create_convertors()
+
+    # Assert
+    for convertor in convertors:
+        assert isinstance(convertor, abstract_convertor)
+
+
+def test_success_abstract_convert_factory_alias_available():
+    """
+    Ожидание: Алиас AbstractConvertFactory указывает на abstract_convert_factory.
+    Метод: abstract_convert_factory (алиас AbstractConvertFactory)
+    Описание: PascalCase-имя класса сохранено для совместимости.
+    """
+    # Arrange, Act & Assert
+    assert AbstractConvertFactory is abstract_convert_factory

@@ -16,5 +16,5 @@ class datetime_convertor(abstract_convertor):
         if not self.convertable(source):
             raise argument_exception("datetime convertor supports only datetime type")
 
-        return {type(source).__name__: source}
+        return source
 
