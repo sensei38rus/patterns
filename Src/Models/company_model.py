@@ -1,3 +1,77 @@
-from Src.Models.organization_model import organization_model, company_model
+from Src.Core.validator import validator
+from Src.Core.entity_model import entity_model
 
-__all__ = ["company_model", "organization_model"]
+###############################################
+# Модель организации
+class company_model(entity_model):
+    __inn:int = 0
+    __bic:str = 0
+    __corr_account:int = 0
+    __account:int = 0
+    __ownership:str = ""
+
+    # ИНН : 12 симв
+    # Счет 11 симв
+    # Корреспондентский счет 11 симв
+    # БИК 9 симв
+    # Наименование
+    # Вид собственности 5 симв
+
+    def __init__(self):
+        super().__init__()
+
+    # ИНН
+    @property
+    def inn(self) -> str:
+        return self.__inn
+    
+    @inn.setter
+    def inn(self, value:int):
+        validator.validate(value, int, 12)
+        self.__inn = value
+
+    # БИК
+    @property
+    def bik(self) -> str:
+        return self.__bic
+
+    @bik.setter
+    def bik(self, value:str):
+        validator.validate(value, str, 9)
+        self.__bic = value.strip()
+
+    # Корреспондентский счет
+    @property
+    def corr_account(self) -> int:
+        return self.__corr_account
+        
+    @corr_account.setter
+    def corr_account(self, value:int):
+        validator.validate(value, int, 11)
+        self.__corr_account = value
+
+    # Банковский счет
+    @property
+    def account(self) -> int:
+        return self.__account
+    
+    @account.setter
+    def account(self, value:int):
+        validator.validate(value, int, 11)
+        self.__account = value
+
+    # Вид собственности
+    @property
+    def ownership(self) -> str:
+        return self.__ownership
+    
+    @ownership.setter
+    def ownership(self, value:str):
+        validator.validate(value, str, 5)
+        self.__ownership = value.strip()
+
+ 
+
+       
+
+

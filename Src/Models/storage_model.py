@@ -1,52 +1,27 @@
-from Src.Core.abstract_model import abs_mod
-from Src.Core.exception import argument_exception
+from Src.Core.entity_model import entity_model
+from Src.Core.validator import validator
 
 
-class storage_model(abs_mod):
-    """
-    Модель склада.
-    Место хранения запасов продуктов и заготовок (например, "Основной склад", "Холодильник цеха").
-    """
+"""
+Модель склада
+"""
+class storage_model(entity_model):
+    __address:str = ""
 
-    def __init__(self, name="", address=""):
-        """
-        Конструктор склада.
-
-        Параметры:
-            name: Наименование склада (до 50 символов)
-            address: Адрес расположения склада / помещения
-        """
+    def __init__(self):
         super().__init__()
-        self.name = name
-        self.address = address
-
+        
+    """
+    Адрес
+    """
     @property
-    def address(self):
-        """
-        Возвращает адрес склада.
-        """
-        return self.__address
-
+    def address(self) -> str:
+        return self.__address.strip()
+    
     @address.setter
-    def address(self, value):
-        """
-        Задаёт адрес склада.
-        """
-        if not isinstance(value, str):
-            raise argument_exception("address", "Адрес должен быть строкой")
-
+    def address(self, value:str):
+        validator.validate(value, str)
         self.__address = value.strip()
 
-    @staticmethod
-    def create_main_storage():
-        """
-        Фабричный метод - создать "Основной склад".
-        """
-        return storage_model(name="Основной склад", address="ул. Промышленная, 5, пом. 101")
 
-    @staticmethod
-    def create_fridge():
-        """
-        Фабричный метод - создать "Холодильник цеха".
-        """
-        return storage_model(name="Холодильник цеха", address="ул. Промышленная, 5, пом. 102")
+    

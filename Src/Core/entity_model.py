@@ -1,19 +1,24 @@
-from Src.Core.abstract_model import abs_mod
+from Src.Core.abstract_model import abstact_model
 
 
-class entity_model(abs_mod):
-    """
-    Общий класс для наследования сущностей предметной области.
-    Содержит стандартное определение: уникальный идентификатор (id / unique_code) и наименование (name).
-    """
+"""
+Общий класс для наследования. Содержит стандартное определение: код, наименование
+"""
+class entity_model(abstact_model):
+    __name:str = ""
 
-    def __init__(self, name: str = ""):
-        """
-        Конструктор базовой сущности.
-
-        Параметры:
-            name: Наименование сущности (опционально).
-        """
+    def __init__(self):
         super().__init__()
-        if name and str(name).strip():
-            self.name = str(name).strip()
+
+    """
+    Наименование
+    """
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @name.setter
+    def name(self, value:str):
+        self.__name = value.strip()
+
+  
