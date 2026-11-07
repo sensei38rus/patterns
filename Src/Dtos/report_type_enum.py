@@ -4,12 +4,18 @@ from enum import Enum
 Типы отчетов
 """
 class report_type_enum(Enum):
+    
     """
-    Перечисление поддерживаемых типов отчетов.
+    Текстовый формат
     """
     TXT = 1
+
+    """
+    Формат CSV
+    """
     CSV = 2
+
+    """
+    Формат документации
+    """
     MARKDOWN = 3
-    XML = 4
-    HTML = 5
-    RTF = 6

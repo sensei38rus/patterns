@@ -1,220 +1,223 @@
-import datetime
-import json
-
 from Src.Core.abstract_manager import abstract_manager
-from Src.Core.validator import validator
-from Src.Logics.convert_factory import convert_factory
-from Src.Logics.settings_manager import settings_manager
-from Src.Models.storage_model import storage_model
 from Src.Models.range_model import range_model
+from Src.Models.group_model import group_model
+from Src.Models.storage_model import storage_model
 from Src.Models.nomenclature_model import nomenclature_model
-from Src.Models.nomenclature_group_model import nomenclature_group_model
+from Src.Models.settings_model import settings_model
+from Src.Core.validator import validator
+from Src.Models.ingredient_model import ingredient_model
+from Src.Models.receipt_model import receipt_model
 
-
-def _json_default(value):
-    """
-    Кодировщик для значений, которые json не умеет сериализовать:
-    дата/время -> ISO-8601, остальное -> строковое представление.
-    """
-    if isinstance(value, (datetime.datetime, datetime.date)):
-        return value.isoformat()
-    return str(value)
-
-
+"""
+Реализация менеджера для управления и кеширования доменных сущностей
+"""
 class storage_manager(abstract_manager):
+    # Набор данных
+    __data = {}
+    # Текущие настройки
+    __settings:settings_model = None
+
     """
-    Менеджер хранения доменных моделей.
-    При первом старте (is_first_start == True) формирует первичные справочники.
+    Единица измерений
     """
+    @staticmethod
+    def range_key():
+        return "range_model"
+    
 
-    _storages: dict = None
-    _ranges: dict = None
-    _nomenclatures: dict = None
-    _groups: dict = None
-    __is_initialized: bool = False
+    """
+    Категория
+    """
+    @staticmethod
+    def group_key():
+        return "group_model"
+    
+    """
+    Склад
+    """
+    @staticmethod
+    def storage_key():
+        return "storage_model"
 
-    # Singleton
-    def __new__(cls):
-        if not hasattr(cls, "instance"):
-            cls.instance = super(storage_manager, cls).__new__(cls)
-            cls.instance._storages = {}
-            cls.instance._ranges = {}
-            cls.instance._nomenclatures = {}
-            cls.instance._groups = {}
-            cls.instance.__is_initialized = False
-        return cls.instance
+    """
+    Номенклатура
+    """
+    @staticmethod
+    def nomenclature_key():
+        return "nomenclature_model"
 
-    def convert(self, settings=None) -> bool:
+    """
+    Рецепты
+    """
+    @staticmethod
+    def receipt_key():
+        return "receipt_model"
+
+
+    @staticmethod
+    def domains() -> dict:
         """
-        Переопределенный метод abstract_manager.
-        Если запуск первый (is_first_start == True) — генерирует первичные данные.
-        При передаче settings извне — использует переданный объект (для тестов).
+        Возвращает словарь всех доступных ключей и их описаний.
+        Ключ — значение, возвращаемое методом (например, "nomenclature_model").
+        Значение — описание из docstring метода (например, "Номенклатура").
         """
-        if self.__is_initialized:
-            return True
-
-        try:
-            if settings is None:
-                s_manager = settings_manager()
-                if not s_manager.is_loaded:
-                    s_manager.load()
-                settings = s_manager.settings
-
-            if settings and settings.is_first_start:
-                self._initialize_primary_data()
-
-            self.__is_initialized = True
-            return True
-        except Exception:
-            return False
-
-    def _initialize_primary_data(self) -> None:
-        """
-        Инициализация первичных данных.
-        Порядок важен: номенклатура зависит от единиц измерения и групп.
-        """
-        self.__create_ranges()
-        self.__create_groups()
-        self.__create_nomenclatures()
-        self.__create_storages()
-
-    def __create_ranges(self) -> None:
-        """Генерация базовых и производных единиц измерения с использованием фабричных методов."""
-        kilogram = range_model.create_kilogram()
-        gram = kilogram.base
-        liter = range_model.create_liter()
-        milliliter = liter.base
-        piece = range_model.create_piece()
-
-        for r in (gram, kilogram, milliliter, liter, piece):
-            self.add_range(r)
-
-    def __create_groups(self) -> None:
-        """Генерация групп номенклатуры через фабричные методы nomenclature_group_model."""
-        for group in (
-            nomenclature_group_model.create_grocery(),
-            nomenclature_group_model.create_dairy(),
-            nomenclature_group_model.create_dishes(),
-            nomenclature_group_model.create_packaging(),
-        ):
-            self.add_group(group)
-
-    def __create_nomenclatures(self) -> None:
-        """Генерация номенклатуры через фабричные методы nomenclature_model."""
-        groups_by_name = {g.name: g for g in self._groups.values()}
-        ranges_by_name = {r.name: r for r in self._ranges.values()}
-
-        items = [
-            nomenclature_model.create_flour(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
-            nomenclature_model.create_milk(groups_by_name.get("Молочные продукты"), ranges_by_name.get("литр")),
-            nomenclature_model.create_eggs(groups_by_name.get("Молочные продукты"), ranges_by_name.get("штука")),
-            nomenclature_model.create_butter(groups_by_name.get("Молочные продукты"), ranges_by_name.get("килограмм")),
-            nomenclature_model.create_sugar(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
-            nomenclature_model.create_salt(groups_by_name.get("Бакалея"), ranges_by_name.get("килограмм")),
-            nomenclature_model.create_cottage_cheese(groups_by_name.get("Молочные продукты"), ranges_by_name.get("килограмм")),
-            nomenclature_model.create_sunflower_oil(groups_by_name.get("Бакалея"), ranges_by_name.get("литр")),
-            nomenclature_model.create_breakfast_box(groups_by_name.get("Упаковка"), ranges_by_name.get("штука")),
-            nomenclature_model.create_pancakes(groups_by_name.get("Блюда"), ranges_by_name.get("штука")),
+        result = {}
+        
+        # Получаем список имен всех статических методов, заканчивающихся на '_key'
+        method_names = [
+            name for name in dir(storage_manager) 
+            if callable(getattr(storage_manager, name)) and name.endswith('_key')
         ]
 
-        for item in items:
-            self.add_nomenclature(item)
+        for method_name in method_names:
+            # Получаем сам объект метода
+            method = getattr(storage_manager, method_name)
+            
+            # Получаем значение ключа (например, "nomenclature_model")
+            key_value = method()
+            
+            # Получаем описание из документации (первая строка docstring)
+            docstring = method.__doc__
+            description = docstring.strip().split('\n')[0] if docstring else method_name
+            
+            result[key_value] = description
+            
+        return result
+    
 
-    def __create_storages(self) -> None:
-        """Генерация складов через фабричные методы storage_model."""
-        self.add_storage(storage_model.create_main_storage())
-        self.add_storage(storage_model.create_fridge())
 
-    def add_storage(self, item: storage_model) -> bool:
-        """Добавить склад. Возвращает True, если добавлен; False, если дубликат или неверный тип."""
-        if not isinstance(item, storage_model) or item.id in self._storages:
+    """
+    Получить набор данных
+    """
+    @property
+    def data(self):
+        return self.__data
+
+
+
+    """
+    Конструктор
+    """
+    def __init__(self, settings:settings_model):
+        validator.validate(settings, settings_model)
+        self.__settings = settings
+        
+        keys = storage_manager.domains().keys()
+        for key in keys:
+            self.__data[ key ] = []
+
+    """
+    Генерация данных
+    """        
+    def build(self):
+
+        if self.__settings.first_start == False or self.is_loaded == True:
             return False
-        self._storages[item.id] = item
+        
+        # Единицы измерения
+        range_killogramm = range_model.create_killogramm()
+
+        range_item = range_model()
+        range_item.name = "Штуки"
+
+        self.data[ storage_manager.range_key() ] = [range_killogramm.base, range_killogramm, range_item]
+
+        # Группы
+        group = group_model.create_default_group()
+        self.data[ storage_manager.group_key() ] = [group]
+
+        # Склады
+        storage = storage_model()
+        storage.name = "Основной склад"
+        storage.address = "Иркутск, ул. Высокого Полета, д.100"
+
+        self.data[ storage_manager.storage_key() ] = [storage]
+
+        # Номенклатура
+        nomenclature_flour = nomenclature_model()
+        nomenclature_flour.name = "Пшеничная мука"
+        nomenclature_flour.group = group
+        nomenclature_flour.range = range_killogramm
+
+        nomenclature_sugar = nomenclature_model()
+        nomenclature_sugar.name = "Сахар"
+        nomenclature_sugar.group = group
+        nomenclature_sugar.range = range_killogramm
+
+        nomenclature_oil = nomenclature_model()
+        nomenclature_oil.name = "Сливочное масло"
+        nomenclature_oil.group = group
+        nomenclature_oil.range = range_killogramm
+
+        nomenclature_egg = nomenclature_model()
+        nomenclature_egg.name = "Яйцо (шт)"
+        nomenclature_egg.group = group
+        nomenclature_egg.range = range_item
+
+        nomenclature_vanilin = nomenclature_model()
+        nomenclature_vanilin.name = "Ванилин"
+        nomenclature_vanilin.group = group
+        nomenclature_vanilin.range = range_killogramm.base
+
+        self.data[ storage_manager.nomenclature_key() ] = [nomenclature_flour, nomenclature_sugar, nomenclature_oil, nomenclature_egg, nomenclature_vanilin]
+
+        # Создание рецепта "Вафли хрустящие в вафельнице" (10 порций)
+        receipt = receipt_model()
+
+        # Ингредиент 1: Пшеничная мука (100 гр)
+        ingredient_flour = ingredient_model()
+        ingredient_flour.name = "Пшеничная мука"
+        ingredient_flour.group = group
+        ingredient_flour.range = range_killogramm
+        ingredient_flour.brutto = 100
+        ingredient_flour.netto = 100
+        receipt.add(ingredient_flour)
+
+        # Ингредиент 2: Сахар (80 гр)
+        ingredient_sugar = ingredient_model()
+        ingredient_sugar.name = "Сахар"
+        ingredient_sugar.group = group
+        ingredient_sugar.range = range_killogramm
+        ingredient_sugar.brutto = 80
+        ingredient_sugar.netto = 80
+        receipt.add(ingredient_sugar)
+
+        # Ингредиент 3: Сливочное масло (70 гр)
+        ingredient_butter = ingredient_model()
+        ingredient_butter.name = "Сливочное масло"
+        ingredient_butter.group = group
+        ingredient_butter.range = range_killogramm
+        ingredient_butter.brutto = 70
+        ingredient_butter.netto = 70
+        receipt.add(ingredient_butter)
+
+        # Ингредиент 4: Яйца (1 шт)
+        ingredient_egg = ingredient_model()
+        ingredient_egg.name = "Яйца"
+        ingredient_egg.group = group
+        ingredient_egg.range = range_item
+        ingredient_egg.brutto = 1
+        ingredient_egg.netto = 1
+        receipt.add(ingredient_egg)
+
+        # Ингредиент 5: Ванилин (5 гр)
+        ingredient_vanilin = ingredient_model()
+        ingredient_vanilin.name = "Ванилин"
+        ingredient_vanilin.group = group
+        ingredient_vanilin.range = range_killogramm.base
+        ingredient_vanilin.brutto = 5
+        ingredient_vanilin.netto = 5
+        receipt.add(ingredient_vanilin)
+
+        # Сохранение рецепта в кеш
+        self.data[ storage_manager.receipt_key() ] = [receipt]
+
         return True
 
-    def add_range(self, item: range_model) -> bool:
-        """Добавить единицу измерения."""
-        if not isinstance(item, range_model) or item.id in self._ranges:
-            return False
-        self._ranges[item.id] = item
-        return True
+    
 
-    def add_nomenclature(self, item: nomenclature_model) -> bool:
-        """Добавить позицию номенклатуры."""
-        if not isinstance(item, nomenclature_model) or item.id in self._nomenclatures:
-            return False
-        self._nomenclatures[item.id] = item
-        return True
+        
 
-    def add_group(self, item: nomenclature_group_model) -> bool:
-        """Добавить группу номенклатуры."""
-        if not isinstance(item, nomenclature_group_model) or item.id in self._groups:
-            return False
-        self._groups[item.id] = item
-        return True
 
-    @property
-    def storages(self) -> dict:
-        """Словарь складов {id: storage_model}."""
-        return self._storages
 
-    @property
-    def ranges(self) -> dict:
-        """Словарь единиц измерения {id: range_model}."""
-        return self._ranges
 
-    @property
-    def nomenclatures(self) -> dict:
-        """Словарь номенклатуры {id: nomenclature_model}."""
-        return self._nomenclatures
-
-    @property
-    def groups(self) -> dict:
-        """Словарь групп номенклатуры {id: nomenclature_group_model}."""
-        return self._groups
-
-    @property
-    def data(self) -> dict:
-        """Все данные хранилища по категориям."""
-        return {
-            "storages": self._storages,
-            "ranges": self._ranges,
-            "nomenclatures": self._nomenclatures,
-            "groups": self._groups
-        }
-
-    def export_json(self, path: str) -> bool:
-        """
-        Выгрузить все данные хранилища в один JSON-файл.
-
-        Сущности конвертируются через convert_factory: ссылки заменяются
-        идентификаторами, значения остаются плоскими (без обёртки по типу),
-        каждая сущность попадает в файл ровно один раз.
-
-        :param path: Путь к файлу для записи
-        :return: True, если выгрузка выполнена; False при ошибке записи
-        """
-        try:
-            factory = convert_factory()
-            visited = set()
-            entities = []
-
-            for collection in self.data.values():
-                for item in collection.values():
-                    entities.extend(factory.convert(item, visited))
-
-            with open(path, "w", encoding="utf-8") as file:
-                json.dump(entities, file, ensure_ascii=False, indent=2, default=_json_default)
-            return True
-        except Exception:
-            return False
-
-    @property
-    def is_initialized(self) -> bool:
-        """Флаг завершения инициализации."""
-        return self.__is_initialized
-
-    @property
-    def is_loaded(self) -> bool:
-        """Флаг готовности данных (переопределение abstract_manager)."""
-        return self.__is_initialized

@@ -1,28 +1,33 @@
 from Src.Core.abstract_convertor import abstract_convertor
-from Src.Core.exception import argument_exception
 
 """
-Конвертер примитивных типов (int, float, str).
-Возвращает значение как есть — без обёртки {имя_типа: значение},
-чтобы результат был плоским и корректно сериализовался в JSON.
+Конвертация простого объекта
 """
 class basic_convertor(abstract_convertor):
 
-   @staticmethod
-   def convertable(obj):
-      """
-      Проверить, поддерживает ли конвертер указанный тип.
-      Область поддержки: int, float, str.
-      """
-      return isinstance(obj, (int, float, str))
+   def __init__(self):
+       super().__init__()
 
-   def Convert(self, source):
-      """
-      Конвертировать примитивное значение.
-      Значение возвращается в исходном виде (плоское, без обёртки),
-      None и посторонние типы не поддерживаются и приводят к исключению.
-      """
-      if not self.convertable(source):
-         raise argument_exception("basic convertor supports only int, float and string")
+   """
+   Выполнить сериализацию
+   """ 
+   def serialize(self, field: str, object:any) -> dict:
+      super().serialize( field, object)
 
-      return source
+      if not isinstance(object, (int, str, bool, float)):
+          self.error_text = f"Некорректный тип данных передан для конвертации. Ожидается: (int, str, bool). Передан: {type(object)}"
+          return None
+
+      try:
+            return { field: object }
+      except Exception as ex:
+            self.set_exception(ex)  
+
+      return None   
+
+
+   """
+   Выполнить десериализацию
+   """
+   def deserialize(self, source: dict ) -> object:
+        pass

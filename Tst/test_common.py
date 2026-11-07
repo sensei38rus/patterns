@@ -1,65 +1,52 @@
-import pytest
 from Src.Core.common import common
-from Src.Core.exception import argument_exception
+from Src.Models.company_model import company_model
+from Src.Models.receipt_model import receipt_model
+from Src.Models.ingredient_model import ingredient_model
 from Src.Models.range_model import range_model
+from Src.Models.group_model import group_model
 
 
-def test_error_common_get_fields_none():
-    """
-    Ожидание: Исключение argument_exception при передаче None в source.
-    Метод: common.get_fields
-    Описание: При передаче None в качестве источника метод должен выбрасывать argument_exception.
-    """
-    # Arrange, Act & Assert
-    with pytest.raises(argument_exception):
-        common.get_fields(None)
+"""
+Проверить работу метода get_entity_header класса common
+"""
+def test_not_empty_common_get_entity_header():
+    # Подготовка
+    model = company_model()
 
+    # Действие
+    result = common.get_entity_header(model)
 
-def test_success_common_get_fields_model():
-    """
-    Ожидание: Возврат списка публичных свойств модели.
-    Метод: common.get_fields
-    Описание: Метод возвращает имена всех свойств (property) переданного объекта.
-    """
-    # Arrange
-    item = range_model("грамм", 1)
+    # Проверки
+    assert len(result) > 0
 
-    # Act
-    fields = common.get_fields(item)
+"""
+Проверить работу метода get_entity_table класса common
+"""
+def test_empty_common_get_entity_table():
+    model = company_model()
+    
+    # Действие
+    result = common.get_entity_table(model)
+    
+    # Проверки
+    assert len(result) == 0
 
-    # Assert
-    assert isinstance(fields, list)
-    assert "name" in fields
-    assert "id" in fields
-    assert "conversion_factor" in fields
+"""
+Проверить работу метода get_entity_table 
+"""
+def test_not_empty_aggregate_common_get_entity_table():  
+    # Подготовка
+    receipt = receipt_model()
+    ingredient_oil = ingredient_model()
+    ingredient_oil.name = "Масло подсолнечное"
+    ingredient_oil.range = range_model.create_litr()
+    ingredient_oil.group = group_model.create_default_group()
+    ingredient_oil.brutto = 10
+    ingredient_oil.netto = 5
+    receipt.add(ingredient_oil)
 
+    # Действие
+    result = common.get_entity_table(receipt)
 
-def test_success_common_get_fields_is_common_filter():
-    """
-    Ожидание: Фильтрация списков и словарей при флаге is_common=True.
-    Метод: common.get_fields
-    Описание: Если флаг is_common=True, свойства, возвращающие list или dict, исключаются из результата.
-    """
-    # Arrange
-    class dummy_model:
-        @property
-        def text(self):
-            return "sample"
-
-        @property
-        def items(self):
-            return [1, 2, 3]
-
-        @property
-        def mapping(self):
-            return {"key": "value"}
-
-    obj = dummy_model()
-
-    # Act
-    all_fields = common.get_fields(obj, is_common=False)
-    simple_fields = common.get_fields(obj, is_common=True)
-
-    # Assert
-    assert set(all_fields) == {"text", "items", "mapping"}
-    assert simple_fields == ["text"]
+    # Проверки
+    assert len(result) > 0

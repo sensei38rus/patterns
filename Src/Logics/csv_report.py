@@ -1,56 +1,35 @@
 from Src.Core.abstract_report import abstract_report
+from Src.Core.validator import validator
 from Src.Dtos.report_result_dto import report_result_dto
-from Src.Logics.report_source_builder import report_source_builder
+from Src.Core.abstract_model import abstact_model
+from Src.Core.common import common
+from Src.Core.abstract_model import abstact_model
+from Src.Core.entity_model import entity_model
+
 
 """
-Реализация отчета в формате CSV.
-Результат формируется в виде бинарных данных (кодировка UTF-8) для скачивания файла.
+Реализация CSV представления отчета по рецепту
 """
 class csv_report(abstract_report):
-
-    @property
-    def content_type(self) -> str:
-        """
-        MIME-тип содержимого CSV-отчета.
-        """
-        return "text/csv; charset=utf-8"
-
-    @property
-    def file_extension(self) -> str:
-        """
-        Расширение файла CSV-отчета.
-        """
-        return "csv"
 
     """
     Переопределенный метод формирования отчета
     """
-    def build(self, source) -> report_result_dto:
-        table = report_source_builder.build(source)
+    def build(self, source: abstact_model) -> report_result_dto:
+        validator.validate(source, abstact_model)
+        lines = [] 
+    
+        headers = common.get_entity_header(source) 
+        # Заголовок
+        header_line = " ; ".join([header.field.capitalize() for header in headers]) 
+        # Данные
+        data_line = " ; ".join([ str(header.value) for header in headers]) 
 
-        header = ",".join(self.__escape(title) for key, title in table.columns)
-        data = ""
-
-        for row in table.rows:
-            data += "\n" + ",".join(self.__escape(row[key]) for key in table.keys)
-
+        lines.append(header_line)
+        lines.append(data_line)
+              
         result = report_result_dto()
-        result.binary = list(f"{header}{data}".encode("utf-8"))
-
+        result.text = "\n".join(lines) 
+        result.format = "text/plain"
+    
         return result
-
-    @staticmethod
-    def __escape(value) -> str:
-        """
-        Экранирование значения по правилам CSV: значения с разделителями
-        или кавычками заключаются в кавычки, внутренние кавычки удваиваются.
-        """
-        text = str(value)
-
-        if any(symbol in text for symbol in (",", '"', "\n", "\r")):
-            return f'"{text.replace(chr(34), chr(34) * 2)}"'
-
-        return text
-
-
-CsvReport = csv_report

@@ -1,97 +1,80 @@
-from Src.Core.abstract_model import abstract_model
+from Src.Core.abstract_model import abstact_model
+from Src.Models.company_model import company_model
 from Src.Core.validator import validator
-from Src.Core.exception import argument_exception
-from Src.Models.organization_model import organization_model
 from Src.Dtos.report_type_enum import report_type_enum
-# from Src.Dtos.response_format_dto import response_format_dto
 
 
-class settings_model(abstract_model):
-    """Модель настроек приложения."""
-
+class settings_model(abstact_model):
     # Карточка организации
-    __organization: organization_model = None
-    # Наименование руководителя
-    __boss_name: str = ""
+    __company:company_model = None
+    # Наименование директора
+    __boss_name:str = ""
     # Наименование главного бухгалтера
-    __account_name: str = ""
-    # Флаг первого старта приложения
-    __is_first_start: bool = False
-    # Формат ответа по умолчанию
-    __response_format: report_type_enum = report_type_enum.HTML
+    __account_name:str = ""
+    # Первый старт
+    __first_start:bool = True
+    # Формат по умолчанию
+    __report_type:report_type_enum = report_type_enum.TXT
 
+    def __init__(self):
+        super().__init__()
+        
+    """
+    Карточка организации
+    """
     @property
-    def organization(self) -> organization_model:
-        """Карточка организации."""
-        return self.__organization
-
-    @organization.setter
-    def organization(self, value: organization_model) -> None:
-        """Задаёт карточку организации."""
-        validator.validate(value, organization_model)
-        self.__organization = value
-
-    @property
-    def company(self) -> organization_model:
-        """Псевдоним для карточки организации."""
-        return self.__organization
+    def company(self) -> company_model:
+        return self.__company
 
     @company.setter
-    def company(self, value: organization_model) -> None:
-        """Задаёт карточку организации (псевдоним)."""
-        self.organization = value
+    def company(self, value:company_model) -> None:
+        validator.validate(value, company_model)
+        self.__company = value
 
+    """
+    Наименование директора
+    """
     @property
     def boss_name(self) -> str:
-        """Наименование руководителя."""
         return self.__boss_name
 
     @boss_name.setter
-    def boss_name(self, value: str) -> None:
-        """Задаёт наименование руководителя."""
-        validator.validate(value, str, 255)
+    def boss_name(self, value:str) -> None:
+        validator.validate (value, str, 255)
         self.__boss_name = value.strip()
 
+    """
+    Главный бухгалтер
+    """
     @property
     def account_name(self) -> str:
-        """Наименование главного бухгалтера."""
-        return self.__account_name
+        return self.__account_name    
 
     @account_name.setter
-    def account_name(self, value: str) -> None:
-        """Задаёт наименование главного бухгалтера."""
+    def account_name(self, value:str) -> None:
         validator.validate(value, str, 255)
         self.__account_name = value.strip()
 
-    @property
-    def is_first_start(self) -> bool:
-        """Флаг первого старта приложения."""
-        return self.__is_first_start
-
-    @is_first_start.setter
-    def is_first_start(self, value: bool) -> None:
-        """Задаёт флаг первого старта приложения."""
-        validator.validate(value, bool)
-        self.__is_first_start = value
-
+    """
+    Флаг. Первый старт
+    """
     @property
     def first_start(self) -> bool:
-        """Флаг первого старта (псевдоним для is_first_start)."""
-        return self.__is_first_start
+        return self.__first_start    
 
     @first_start.setter
-    def first_start(self, value: bool) -> None:
-        """Задаёт флаг первого старта (псевдоним для is_first_start)."""
+    def first_start(self, value:bool) -> None:
         validator.validate(value, bool)
-        self.__is_first_start = value
+        self.__first_start = value
 
+    """
+    Формат отчетов по умолчанию
+    """
     @property
-    def response_format(self) -> report_type_enum:
-        """Формат ответа по умолчанию."""
-        return self.__response_format
+    def default_report_type(self) -> report_type_enum:
+        return self.__report_type
 
-    @response_format.setter
-    def response_format(self, value) -> None:
-        """Задаёт формат ответа по умолчанию."""
-        from Src.Logics.settings_manager import settings_manager
-        self.__response_format = settings_manager.convert_report_type(value)
+    @default_report_type.setter
+    def default_report_type(self, value:int)-> None:
+        validator.validate(value, int)
+        self.__report_type = report_type_enum(value)

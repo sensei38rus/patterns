@@ -1,196 +1,56 @@
+from typing import Any, Dict, Type
 from Src.Core.abstract_convert_factory import abstract_convert_factory
 from Src.Core.abstract_convertor import abstract_convertor
-from Src.Core.abstract_model import abs_mod
-from Src.Core.exception import argument_exception
 from Src.Logics.basic_convertor import basic_convertor
+from datetime import datetime
 from Src.Logics.datetime_convertor import datetime_convertor
-from Src.Logics.reference_convertor import reference_convertor
+from Src.Logics.list_convertor import list_convertor
+from Src.Logics.dict_convertor import dict_convertor
+from Src.Core.abstract_model import abstact_model
+from Src.Core.entity_model import entity_model
+from Src.Logics.domain_convertor import domain_convertor
+from Src.Core.validator import validator, operation_exception
+from Src.Logics.mapping_factory import mapping_factory
 
 """
-Конкретная фабрика конвертеров типов (абстрактная фабрика).
-Создаёт семейство связанных конвертеров и формирует набор
-JSON-совместимых значений согласно исходной структуре источника.
+Реализация фабрики для подбора нужного конвертора
 """
 class convert_factory(abstract_convert_factory):
+    # Маппитнг типов и конверторов
+    __mapping: Dict[Type, Type[abstract_convertor]] = {}
 
-    # Набор доступных конвертеров (семейство фабрики)
-    __convertors: list[abstract_convertor]
+    # Маппинг фабрика
+    __mapping_factory: mapping_factory
+
 
     def __init__(self):
-        """
-        Конструктор фабрики. Создаёт семейство поддерживаемых конвертеров:
-        базовый (int, float, str), дата/время и конвертер ссылочных моделей.
-        """
-        self.__convertors = self.create_convertors()
+        super().__init__()
+      
+        self.__mapping_factory = mapping_factory()
+        self.__mapping = {
+                    int: basic_convertor(),
+                    float: basic_convertor(),
+                    str: basic_convertor(),
+                    datetime: datetime_convertor(),
+                    list: list_convertor(self, self.__mapping_factory),
+                    dict: dict_convertor(),
+                    entity_model: domain_convertor(self, self.__mapping_factory), 
+                    abstact_model: domain_convertor(self, self.__mapping_factory)
+                }
 
-    def create_convertors(self) -> list[abstract_convertor]:
-        """
-        Создать семейство связанных конвертеров типов.
-        Базовый конвертер — примитивы (int, float, str),
-        дата/время — datetime, ссылочный — модели (abs_mod).
-        :return: Список конвертеров, образующих семейство фабрики
-        """
-        return [
-            basic_convertor(),
-            datetime_convertor(),
-            reference_convertor(),
-        ]
+    # Singletone
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+              cls.instance = super(convert_factory, cls).__new__(cls)
+        return cls.instance     
+        
 
-    @property
-    def convertors(self) -> list[abstract_convertor]:
-        """
-        Возвращает копию набора конвертеров фабрики.
-        """
-        return list(self.__convertors)
-
-    def convert(self, source, visited: set = None) -> list:
-        """
-        Конвертировать объект любого типа в список JSON-совместимых значений.
-
-        Примитивы и дата/время конвертируются соответствующим конвертером
-        и возвращаются как есть (без обёртки по типу). Модели (наследники abs_mod)
-        конвертируются в словарь полей; вложенные модели добавляются отдельными
-        словарями после словаря родителя (обход в глубину), ссылки на них
-        заменяются идентификаторами. Списки и словари обрабатываются
-        поэлементно рекурсивно.
-
-        :param source: Исходный объект (примитив, дата/время, модель, список, словарь)
-        :param visited: Идентификаторы уже посещённых моделей (защита от циклов,
-                        позволяет разделять обход между несколькими вызовами)
-        :return: Список словарей моделей (для примитивов — список значений)
-        """
-        if source is None:
-            raise argument_exception("source", "Источник не должен быть None")
-
-        if visited is None:
-            visited = set()
-
-        if isinstance(source, (list, tuple)):
-            result = []
-            for item in source:
-                result.extend(self.convert(item, visited))
-            return result
-
-        if isinstance(source, dict):
-            return self.__convert_pairs(source.items(), visited)
-
-        return self.__convert(source, visited)
-
-    def __convert(self, source, visited: set) -> list:
-        """
-        Конвертировать одиночный объект, подобрав конвертер по его типу.
-        """
-        convertor = self.__select(source)
-
-        if isinstance(convertor, reference_convertor):
-            return self.__convert_entity(source, visited)
-
-        return [convertor.Convert(source)]
-
-    def __select(self, source) -> abstract_convertor:
-        """
-        Подобрать первый конвертер, который поддерживает указанный тип.
-        """
-        for convertor in self.__convertors:
-            if convertor.convertable(source):
+    """
+    Создать требуемый конвертор
+    """
+    def create(self, source: Any) -> abstract_convertor:
+        for source_type, convertor in self.__mapping.items():
+            if isinstance(source, source_type):
                 return convertor
-
-        raise argument_exception(
-            "source",
-            f"Тип {type(source).__name__} не поддерживается фабрикой конвертеров!"
-        )
-
-    def __convert_entity(self, entity: abs_mod, visited: set) -> list[dict]:
-        """
-        Конвертировать модель в словарь её полей и словари вложенных моделей.
-
-        :param entity: Экземпляр модели (наследник abs_mod)
-        :param visited: Идентификаторы уже посещённых моделей (защита от циклов)
-        :return: Список словарей: словарь родителя, затем словари вложенных моделей
-        """
-        if entity.id in visited:
-            return []
-
-        visited.add(entity.id)
-
-        pairs = []
-
-        for name in dir(type(entity)):
-            if name.startswith("_"):
-                continue
-
-            if not isinstance(getattr(type(entity), name, None), property):
-                continue
-
-            try:
-                pairs.append((name, getattr(entity, name)))
-            except Exception as error:
-                raise argument_exception("source", f"property '{name}' cannot be read: {error}")
-
-        return self.__convert_pairs(pairs, visited)
-
-    def __convert_pairs(self, pairs, visited: set = None) -> list[dict]:
-        """
-        Конвертировать набор пар "ключ-значение" в словарь полей и
-        словари вложенных моделей.
-
-        :param pairs: Итерируемый набор пар (ключ, значение)
-        :param visited: Идентификаторы уже посещённых моделей (защита от циклов)
-        :return: Список словарей: словарь родителя, затем словари вложенных моделей
-        """
-        if visited is None:
-            visited = set()
-
-        fields = {}
-        result = []
-
-        for name, value in pairs:
-            if isinstance(value, abs_mod):
-                fields[name] = value.id
-                result.extend(self.__convert_entity(value, visited))
-            elif isinstance(value, (list, tuple)):
-                collection = []
-                for item in value:
-                    if isinstance(item, abs_mod):
-                        collection.append(item.id)
-                        result.extend(self.__convert_entity(item, visited))
-                    else:
-                        collection.append(self.__convert_value(item))
-                fields[name] = collection
-            else:
-                fields[name] = self.__convert_value(value)
-
-        result.insert(0, fields)
-        return result
-
-    def __convert_value(self, value):
-        """
-        Рекурсивно конвертировать значение поля в JSON-совместимый вид.
-
-        Примитивы и дата/время возвращаются как есть (без обёртки по типу),
-        ссылки на модели — идентификаторами, коллекции и словари
-        обрабатываются поэлементно.
-        """
-        if value is None:
-            return None
-
-        if isinstance(value, abs_mod):
-            return value.id
-
-        if isinstance(value, (list, tuple)):
-            return [self.__convert_value(item) for item in value]
-
-        if isinstance(value, dict):
-            return {key: self.__convert_value(item) for key, item in value.items()}
-
-        for convertor in self.__convertors:
-            if isinstance(convertor, reference_convertor):
-                continue
-
-            if convertor.convertable(value):
-                return convertor.Convert(value)
-
-        return value
-
-
-ConvertFactory = convert_factory
+        
+        raise operation_exception(f"Указанный тип {type(source).__name__} не поддерживается!")

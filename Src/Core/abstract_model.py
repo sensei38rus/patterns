@@ -1,85 +1,42 @@
 from abc import ABC
 import uuid
-from Src.Core.exception import argument_exception, max_length_exception
+from Src.Core.validator import argument_exception
 
+"""
+Абстрактный класс для наследования моделей
+Содержит в себе только генерацию уникального кода
+"""
+class abstact_model(ABC):
+    __unique_code:str
 
-class abs_mod(ABC):
+    def __init__(self) -> None:
+        super().__init__()
+        self.__unique_code = uuid.uuid4().hex
+
     """
-    Абстрактный базовый класс для сущностей, обладающих наименованием и уникальным идентификатором.
+    Уникальный код
     """
-
-    # Максимальная длина наименования
-    __max_name_length = 50
-
-    def __init__(self):
-        """
-        Конструктор класса. Инициализирует имя пустой строкой и генерирует уникальный строковый id.
-        """
-        self.__name = ""
-        self.__id = str(uuid.uuid4())
-
-    @property
-    def id(self):
-        """
-        Возвращает строковый идентификатор объекта.
-        """
-        return self.__id
-
-    @id.setter
-    def id(self, value):
-        """
-        Задаёт строковый идентификатор объекта.
-        """
-        if value is not None and str(value).strip() != "":
-            self.__id = str(value).strip()
-        else:
-            raise argument_exception("id", "Идентификатор не должен быть пустым")
-
     @property
     def unique_code(self) -> str:
-        """
-        Возвращает уникальный код объекта (алиас для id / совместимость).
-        """
-        return self.id
-
+        return self.__unique_code
+    
     @unique_code.setter
     def unique_code(self, value: str):
-        """
-        Задаёт уникальный код объекта (алиас для id / совместимость).
-        """
-        self.id = value
+        if value.strip() == "":
+            raise argument_exception("value", "Некорректно передан параметр!")
 
-        
-    @property
-    def name(self):
-        """
-        Возвращает наименование объекта.
-        """
-        return self.__name
+        self.__unique_code = value.strip()
 
-    @name.setter
-    def name(self, new_name):
-        """
-        Задаёт наименование объекта. Максимальная длина — 50 символов.
-        """
-        if new_name is None or str(new_name).strip() == "":
-            raise argument_exception("name", "Имя не должно быть пустым")
+    """
+    Перегрузка штатного варианта сравнения
+    """
+    def __eq__(self, value) -> bool:
+        if value is  None: return False
+        if not isinstance(value, abstact_model): return False
 
-        value = str(new_name).strip()
+        return self.unique_code == value.unique_code
 
-        if len(value) > self.__max_name_length:
-            raise max_length_exception("name", len(value), self.__max_name_length)
-
-        self.__name = value
-
-    def __eq__(self, other):
-        """
-        Сравнение двух сущностей по их идентификатору.
-        """
-        if isinstance(other, abs_mod):
-            return str(self.id) == str(other.id)
-        return False
-
-
-abstract_model = abs_mod
-AbstractModel = abs_mod
+    """ Полное название класса (включая модули) """ 
+    @property 
+    def type(self) -> str:
+         return f"{self.__class__.__module__}.{self.__class__.__qualname__}"

@@ -1,204 +1,108 @@
-import os
-import json
 from Src.Core.abstract_manager import abstract_manager
 from Src.Core.validator import validator, operation_exception
-from Src.Core.common import common
-from Src.Core.exception import argument_exception
+import json
+import os
 from Src.Models.settings_model import settings_model
-from Src.Models.organization_model import organization_model
-from Src.Dtos.report_type_enum import report_type_enum
+from Src.Models.company_model import company_model
+from Src.Core.common import common
+import pytest
 
-
-
+"""
+Менеджер для работы с настройками
+"""
 class settings_manager(abstract_manager):
-    """
-    Менеджер для работы с настройками приложения.
-    Реализует шаблон Singleton и загрузку данных через интроспекцию моделей.
-    """
-    __default_file_name: str = "settings.json"
-
-    _settings: settings_model = None
-    __data: dict = None
-
-    # Singleton
-    def __new__(cls):
-        """
-        Реализация шаблона Singleton. Возвращает единственный экземпляр класса.
-        """
-        if not hasattr(cls, "instance"):
-            cls.instance = super(settings_manager, cls).__new__(cls)
-        return cls.instance
+    # Наименование файла по умолчанию
+    __default_file_name:str = "settings.json"
+    # Настройки
+    __settings:settings_model = None
+    # Загруженные сырые данные
+    __data:list = [] 
+    # Информация об ошибке при загрузке
+    __inner_error:str = ""
 
     def __init__(self):
-        """
-        Конструктор менеджера настроек. Инициализирует поля модели настроек и данных.
-        """
-        if not hasattr(self, "_settings") or self._settings is None:
-            self._settings = settings_model()
-            self.__data = {}
+        self.__settings = settings_model()
 
-    def load(self, file_name: str = "") -> None:
-        """
-        Загружает данные настроек из JSON файла.
-        """
-        inner_file_name = file_name.strip() if file_name.strip() != "" else self.__default_file_name
+    # Singletone
+    def __new__(cls):
+          if not hasattr(cls, 'instance'):
+                  cls.instance = super(settings_manager, cls).__new__(cls)
+          return cls.instance 
+  
+    """
+    Загрузка данных
+    """
+    def load(self, file_name:str = ""):
+
+        # Определим название фала
+        inner_file_name = file_name if file_name.strip() != "" else self.__default_file_name
         validator.validate(inner_file_name, str)
 
-        full_file_name = os.path.abspath(inner_file_name)
+        # Дополним имя с учетом текщего каталога
+        full_file_name = os.path.abspath(inner_file_name)        
         if not os.path.exists(full_file_name):
-            raise operation_exception(f"Не найден указанный файл {full_file_name}")
+            raise operation_exception(f'Не найден указанный файл {full_file_name}')
 
         try:
-            with open(full_file_name, "r", encoding="utf-8") as file:
+            with open(full_file_name, "r") as file:
                 self.__data = json.load(file)
-
-            self.is_loaded = self.build()
-            if not self.is_loaded:
-                self._settings = self.__create_default_data()
-
-        except operation_exception:
-            raise
+                self.is_loaded = self.build()
+                if not self.is_loaded:
+                    self.__settings = self.__create_default_data() 
         except Exception as ex:
-            raise operation_exception(
-                f"Ошибка при загрузке и обработке файла: {inner_file_name}. Детали: {ex}"
-            ) from ex
+            raise  operation_exception(f"Ошибка при загрузке и обработке файла: {inner_file_name}. Детали: {ex}")      
 
-    def build(self) -> bool:
-        """
-        Обработать загруженные сырые данные и заполнить settings_model через интроспекцию полей.
-        Использует common.get_fields для динамического связывания.
-        """
-        if not isinstance(self.__data, dict) or len(self.__data) == 0:
-            return False
-
-        try:
-            if self._settings is None:
-                self._settings = settings_model()
-
-            # 1. Загрузка данных организации через рефлексию
-            company = self._settings.organization or organization_model()
-            company_fields = common.get_fields(company, is_common=True)
-
-            org_data = self.__data.get("organization") or self.__data.get("company")
-            if isinstance(org_data, dict):
-                for field in company_fields:
-                    if field in ("id",):
-                        continue
-                    if field in org_data:
-                        val = org_data[field]
-                        if val is not None and str(val).strip():
-                            try:
-                                setattr(company, field, val)
-                            except Exception:
-                                pass
-
-            for field in company_fields:
-                key = f"company_{field}"
-                if key in self.__data:
-                    val = self.__data[key]
-                    if val is not None and str(val).strip():
-                        try:
-                            setattr(company, field, val)
-                        except Exception:
-                            pass
-
-            if company.name:
-                self._settings.organization = company
-
-            # 2. Загрузка данных настроек через рефлексию
-            settings_fields = common.get_fields(self._settings, is_common=True)
-            for field in settings_fields:
-                if field in ("organization", "company", "id", "name", "response_format"):
-                    continue
-                if field in self.__data:
-                    val = self.__data[field]
-                    if val is not None and str(val).strip():
-                        try:
-                            setattr(self._settings, field, val)
-                        except Exception:
-                            pass
-
-            # Поддержка альтернативных наименований флага первого старта
-            if "first_start" in self.__data:
-                self._settings.is_first_start = bool(self.__data.get("first_start"))
-            elif "is_first_start" in self.__data:
-                self._settings.is_first_start = bool(self.__data.get("is_first_start"))
-
-            # Загрузка формата ответа
-            if "response_format" in self.__data:
-                self._settings.response_format = self.convert_report_type(self.__data["response_format"])
-
-            return True
-
-        except Exception:
-            return False
-
-    @staticmethod
-    def convert_report_type(value) -> report_type_enum:
-        """
-        Преобразование произвольного формата (строки, числа, Enum) в report_type_enum.
-        Инкапсулирует логику разбора формата данных настроек.
-        """
-        if value is None:
-            raise argument_exception("report_type", "Тип отчета не может быть пустым!")
-        if isinstance(value, report_type_enum):
-            return value
-
-        candidates = [value]
-        if hasattr(value, "name"):
-            candidates.append(value.name)
-        if hasattr(value, "value"):
-            candidates.append(value.value)
-
-        aliases = {
-            "TEXT": report_type_enum.TXT,
-            "MD": report_type_enum.MARKDOWN,
-        }
-
-        for item in candidates:
-            if isinstance(item, int) or (isinstance(item, str) and str(item).strip().isdigit()):
-                try:
-                    return report_type_enum(int(item))
-                except ValueError:
-                    pass
-
-            key = str(item).strip().upper()
-            if key in report_type_enum.__members__:
-                return report_type_enum[key]
-            if key in aliases:
-                return aliases[key]
-
-        raise argument_exception("report_type", f"Указанный тип отчета '{value}' не реализован!")
-
-    def convert(self) -> bool:
-        """
-        Преобразует сырые данные JSON в объект settings_model.
-        Псевдоним метода build() для обратной совместимости.
-        """
-        return self.build()
-
-    def __create_default_data(self) -> settings_model:
-        """
-        Сформировать настройки по умолчанию при ошибке обработки данных.
-        """
-        result = settings_model()
-
-        company = organization_model(
-            name="ООО Ромашка",
-            inn="7736050003",
-            bik="044525225",
-            account="40812810400000000225",
-            ownership_form="ООО"
-        )
-
-        result.organization = company
-        result.boss_name = "Иван Иванович Иванов"
-        result.account_name = "Сергей Сергеев Сергеевич"
-        result.is_first_start = True
-        result.response_format = report_type_enum.HTML
-        return result
-
+    """
+    Модель настроек
+    """
     @property
     def settings(self) -> settings_model:
-        """Объект настроек settings_model."""
-        return self._settings
+        return self.__settings
+
+    """
+    Обработать загруженные данные
+    """
+    def build(self) -> bool:
+        if len(self.__data) == 0:
+              return False
+
+        try: 
+            # Загружаем данные по организации
+            company = company_model()
+            fields = common.get_fields(company, True)
+            for field in fields:
+                key = f"company_{field}"
+                if key  in self.__data.keys():
+                    setattr( company, field, self.__data[key])
+
+            # Загружаем данные по настройкам
+            fields = common.get_fields(self.__settings, True)
+            for field in fields:
+                key = f"{field}"
+                if key in self.__data.keys():
+                    setattr( self.__settings, field, self.__data[key])
+
+            return True        
+        except Exception as ex:
+            self.__inner_error = str(ex)
+            return False          
+
+
+    """
+    Сформировать настройки по умолчанию
+    """
+    def __create_default_data(self) -> settings_model:
+        result = settings_model()
+
+        company = company_model()
+        company.bik = "044525225"
+        company.inn = 123456789999
+        company.corr_account = "30101810400000000225"
+        company.name = " Сбербанка (Москва)"
+        company.account = "40812810400000000225"
+
+        result.company = company
+        result.boss_name = "Воловиков Александр Сергеевич"
+        result.account_name = "Балахчи Анна Георгиевна"
+
+   

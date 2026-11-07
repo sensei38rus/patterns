@@ -1,44 +1,35 @@
 from abc import ABC
 from Src.Core.validator import validator
 
-
 """
 Абстрактный класс для реализации загрузки и обработки данных
 """
 class abstract_manager(ABC):
-    # Полный путь к файлу данных
-    __file_name: str = ""
-    # Флаг, указывающий, что данные загружены и обработаны
-    _is_loaded: bool = False
-    # Загруженные данные
-    __data: list = []
-
+    # Флаг. Загрузка и обработка завершена успешно
+    __is_loaded:bool = False
+   
     """
-    Загружает данные из файла.
+    Загрузить данные
     """
-    def load(self, file_name: str = "") -> None:
+    def load(self, file_name:str = "") -> None:
         pass
 
     """
-    Обрабатывает загруженные данные.
-    """
-    def convert(self) -> bool:
-        return self.build()
-
-    """
     Обработать загруженные данные
-    """
+    """    
     def build(self) -> bool:
-        return False
+        pass
 
     """
-    Флаг данные подготовленные
+    Флаг. Данные подготовлены
     """
     @property
     def is_loaded(self) -> bool:
-        return self._is_loaded
+        return self.__is_loaded   
 
     @is_loaded.setter
-    def is_loaded(self, value: bool) -> None:
+    def is_loaded(self, value:bool) -> None:
         validator.validate(value, bool)
-        self._is_loaded = value
+        self.__is_loaded = value
+         
+

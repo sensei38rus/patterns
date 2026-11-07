@@ -1,164 +1,85 @@
-from Src.Core.abstract_model import abs_mod
-from Src.Core.exception import argument_exception
+from Src.Core.entity_model import entity_model
+from Src.Core.validator import validator, argument_exception
 
+"""
+Модель единицы измерения
+"""
+class range_model(entity_model):
+    __value:int = 1
+    __base:'range_model' = None
 
-class range_model(abs_mod):
-    """
-    Модель единицы измерения.
-    Содержит базовую единицу измерения и коэффициент пересчёта.
-    """
-
-    def __init__(self, name="", conversion_factor=1, base_range=None):
-        """
-        Конструктор единицы измерения.
-
-        Параметры:
-            name: Наименование единицы (например, "грамм", "кг")
-            conversion_factor: Коэффициент пересчёта относительно базовой единицы
-            base_range: Базовая единица измерения (экземпляр range_model). Для базовой единицы передаётся None
-        """
+    def __init__(self):
         super().__init__()
-        self.__conversion_factor = 1
-        self.__base_range = None
-        if name and str(name).strip() != "":
-            self.name = name
-        self.conversion_factor = conversion_factor
-        self.base_range = base_range
-
+        
+    """
+    Значение коэффициента пересчета
+    """
     @property
-    def conversion_factor(self):
-        """
-        Возвращает коэффициент пересчёта относительно базовой единицы измерения.
-        """
-        return self.__conversion_factor
-
-    @conversion_factor.setter
-    def conversion_factor(self, value):
-        """
-        Задаёт коэффициент пересчёта. Должен быть положительным числом.
-        """
-        if not isinstance(value, (int, float)):
-            raise argument_exception("conversion_factor", "Коэффициент пересчёта должен быть числом")
-
-        if value <= 0:
-            raise argument_exception("conversion_factor", "Коэффициент пересчёта должен быть больше нуля")
-
-        self.__conversion_factor = value
-
-    @property
-    def coefficient(self):
-        """
-        Псевдоним для conversion_factor.
-        """
-        return self.__conversion_factor
-
-    @property
-    def value(self):
-        """
-        Значение коэффициента пересчёта (псевдоним для conversion_factor).
-        """
-        return self.__conversion_factor
-
+    def value(self) -> int:
+        return self.__value
+    
     @value.setter
-    def value(self, val):
-        self.conversion_factor = val
+    def value(self, value: int):
+        validator.validate(value, int)
+        if value <= 0:
+             raise argument_exception("Некорректный аргумент!")
+        self.__value = value
 
-    @property
-    def base_range(self):
-        """
-        Возвращает базовую единицу измерения.
-        Для базовой единицы возвращает None.
-        """
-        return self.__base_range
 
-    @base_range.setter
-    def base_range(self, value):
-        """
-        Задаёт базовую единицу измерения. Для базовой единицы устанавливается None.
-        """
-        if value is not None and not isinstance(value, range_model):
-            raise argument_exception("base_range", "Базовая единица измерения должна быть типа range_model")
-
-        self.__base_range = value
-
+    """
+    Базовая единица измерения
+    """
     @property
     def base(self):
-        """
-        Псевдоним для base_range.
-        """
-        return self.__base_range
-
+        return self.__base
+    
     @base.setter
     def base(self, value):
-        self.base_range = value
+        self.__base = value
 
+    """
+    Фабричный метод - создать киллограмм
+    """
     @staticmethod
-    def create_killogramm(name: str = "Килограмм", base_name: str = "Грамм"):
-        """
-        Фабричный метод - создать килограмм.
-        """
-        gramm = range_model()
-        gramm.name = base_name
+    def create_killogramm() -> "range_model":
+        gramm  =     range_model()
+        gramm.name = "Грамм"
 
         result = range_model()
         result.value = 1000
         result.base = gramm
-        result.name = name
+        result.name = "Коллограмм"
 
         return result
 
+    """
+    Фабричный метод - создать литр
+    """
     @staticmethod
-    def create_kilogram(name: str = "килограмм", base_name: str = "грамм"):
-        """
-        Фабричный метод - создать килограмм.
-        """
-        return range_model.create_killogramm(name=name, base_name=base_name)
+    def create_litr() -> "range_model":
+        ml = range_model()
+        ml.name = "Миллилитр"
 
-    @staticmethod
-    def create_gramm(name: str = "грамм"):
-        """
-        Фабричный метод - создать грамм.
-        """
-        result = range_model()
-        result.name = name
-        result.value = 1
-        return result
-
-    @staticmethod
-    def create_gram(name: str = "грамм"):
-        """
-        Фабричный метод - создать грамм (алиас).
-        """
-        return range_model.create_gramm(name=name)
-
-    @staticmethod
-    def create_milliliter(name: str = "миллилитр"):
-        """
-        Фабричный метод - создать миллилитр.
-        """
-        result = range_model()
-        result.name = name
-        result.value = 1
-        return result
-
-    @staticmethod
-    def create_liter(name: str = "литр", base_name: str = "миллилитр"):
-        """
-        Фабричный метод - создать литр с базовой единицей миллилитр.
-        """
-        ml = range_model.create_milliliter(name=base_name)
         result = range_model()
         result.value = 1000
         result.base = ml
-        result.name = name
+        result.name = "Литр" 
+
         return result
 
+    """
+    Фабричный метод - создать штуки
+    """
     @staticmethod
-    def create_piece(name: str = "штука"):
-        """
-        Фабричный метод - создать штуку.
-        """
+    def create_thing() -> "range_model":
         result = range_model()
-        result.name = name
-        result.value = 1
+        result.name = "Штуки"
+
         return result
+
+
+
+    
+   
+
+    
