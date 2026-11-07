@@ -80,11 +80,3 @@ class receipt_model(entity_model):
             self.__brutto += item.brutto
             self.__netto += item.netto
 
-
-    """
-    Уникальный код
-    """
-    @property
-    def unique_code(self) -> str:
-        super
-        return self._abstact_model__unique_code      

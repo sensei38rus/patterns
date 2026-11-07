@@ -17,10 +17,12 @@ class abstract_convertor(ABC):
         pass
 
     """
-    Выполнить десериализацию
+    Выполнить десериализацию.
+    Контекст передается при рекурсивном обходе вложенных структур
+    и содержит реестр загруженных моделей и отложенные ссылки между ними
     """  
     @abstractmethod   
-    def deserialize(self, source: dict ) -> object:
+    def deserialize(self, source: dict, context: dict = None ) -> object:
         pass
 
     """
