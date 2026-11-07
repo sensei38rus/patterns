@@ -1,0 +1,164 @@
+[
+  {
+    "address": "ул. Промышленная, 5, пом. 101",
+    "id": "2f111430-890d-46d2-92a4-5ae249169bce",
+    "name": "Основной склад",
+    "unique_code": "2f111430-890d-46d2-92a4-5ae249169bce"
+  },
+  {
+    "address": "ул. Промышленная, 5, пом. 102",
+    "id": "1a49ee64-17f4-4e6b-a282-d5aeb1b288be",
+    "name": "Холодильник цеха",
+    "unique_code": "1a49ee64-17f4-4e6b-a282-d5aeb1b288be"
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "5069cd8b-2822-486a-bc1d-83492eedd321",
+    "name": "грамм",
+    "unique_code": "5069cd8b-2822-486a-bc1d-83492eedd321",
+    "value": 1
+  },
+  {
+    "base": "5069cd8b-2822-486a-bc1d-83492eedd321",
+    "base_range": "5069cd8b-2822-486a-bc1d-83492eedd321",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "name": "килограмм",
+    "unique_code": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "fc9769ea-e53b-4fb1-bf02-88506d75d1df",
+    "name": "миллилитр",
+    "unique_code": "fc9769ea-e53b-4fb1-bf02-88506d75d1df",
+    "value": 1
+  },
+  {
+    "base": "fc9769ea-e53b-4fb1-bf02-88506d75d1df",
+    "base_range": "fc9769ea-e53b-4fb1-bf02-88506d75d1df",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "bc7e3b73-33db-4f4c-b8aa-6167f48f3a74",
+    "name": "литр",
+    "unique_code": "bc7e3b73-33db-4f4c-b8aa-6167f48f3a74",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "219c105c-baad-401d-abb9-2b39177b8417",
+    "name": "штука",
+    "unique_code": "219c105c-baad-401d-abb9-2b39177b8417",
+    "value": 1
+  },
+  {
+    "full_name": "Мука пшеничная высший сорт",
+    "group": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0",
+    "id": "fff9551c-2547-4e69-a5d3-7795039e047c",
+    "name": "Мука пшеничная",
+    "range": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "unique_code": "fff9551c-2547-4e69-a5d3-7795039e047c"
+  },
+  {
+    "id": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0",
+    "name": "Бакалея",
+    "unique_code": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0"
+  },
+  {
+    "full_name": "Молоко коровье пастеризованное 3.2%",
+    "group": "6a675c10-ae1e-4c65-bad4-e94ae999c598",
+    "id": "ad8d88d7-e0a6-44fe-9ad2-c8f272636831",
+    "name": "Молоко 3.2%",
+    "range": "bc7e3b73-33db-4f4c-b8aa-6167f48f3a74",
+    "unique_code": "ad8d88d7-e0a6-44fe-9ad2-c8f272636831"
+  },
+  {
+    "id": "6a675c10-ae1e-4c65-bad4-e94ae999c598",
+    "name": "Молочные продукты",
+    "unique_code": "6a675c10-ae1e-4c65-bad4-e94ae999c598"
+  },
+  {
+    "full_name": "Яйца куриные столовые С0",
+    "group": "6a675c10-ae1e-4c65-bad4-e94ae999c598",
+    "id": "4bd7b30c-5c3b-4056-8397-96bbdc8b8166",
+    "name": "Яйца куриные",
+    "range": "219c105c-baad-401d-abb9-2b39177b8417",
+    "unique_code": "4bd7b30c-5c3b-4056-8397-96bbdc8b8166"
+  },
+  {
+    "full_name": "Масло сливочное крестьянское 72.5%",
+    "group": "6a675c10-ae1e-4c65-bad4-e94ae999c598",
+    "id": "d2802905-8754-4a6d-89ba-c92dec98f4a0",
+    "name": "Масло сливочное",
+    "range": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "unique_code": "d2802905-8754-4a6d-89ba-c92dec98f4a0"
+  },
+  {
+    "full_name": "Сахар белый кристаллический",
+    "group": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0",
+    "id": "bd8f7309-1455-4b83-9c2a-8f35e7821ea1",
+    "name": "Сахар",
+    "range": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "unique_code": "bd8f7309-1455-4b83-9c2a-8f35e7821ea1"
+  },
+  {
+    "full_name": "Соль поваренная пищевая",
+    "group": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0",
+    "id": "e2057677-bf25-43b5-8942-48a555dfd47a",
+    "name": "Соль",
+    "range": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "unique_code": "e2057677-bf25-43b5-8942-48a555dfd47a"
+  },
+  {
+    "full_name": "Творог 9% протёртый",
+    "group": "6a675c10-ae1e-4c65-bad4-e94ae999c598",
+    "id": "918c6522-48a8-465c-8138-64a5ec5bf777",
+    "name": "Творог 9%",
+    "range": "7b86cbc6-eb06-4486-8278-bd0b535f0c5b",
+    "unique_code": "918c6522-48a8-465c-8138-64a5ec5bf777"
+  },
+  {
+    "full_name": "Масло подсолнечное рафинированное",
+    "group": "b12ba8b7-fe9f-4d90-ac01-a81241d94ef0",
+    "id": "605e615f-33f4-4d1a-a60d-a3bbdb3f8d60",
+    "name": "Масло подсолнечное",
+    "range": "bc7e3b73-33db-4f4c-b8aa-6167f48f3a74",
+    "unique_code": "605e615f-33f4-4d1a-a60d-a3bbdb3f8d60"
+  },
+  {
+    "full_name": "Коробка бумажная для завтраков",
+    "group": "f9f9a5c4-1d1b-46a6-8004-ae2887449e05",
+    "id": "c0e5e5ce-7cd6-4d5d-b29a-01b305b4dd2d",
+    "name": "Коробка для завтраков",
+    "range": "219c105c-baad-401d-abb9-2b39177b8417",
+    "unique_code": "c0e5e5ce-7cd6-4d5d-b29a-01b305b4dd2d"
+  },
+  {
+    "id": "f9f9a5c4-1d1b-46a6-8004-ae2887449e05",
+    "name": "Упаковка",
+    "unique_code": "f9f9a5c4-1d1b-46a6-8004-ae2887449e05"
+  },
+  {
+    "full_name": "Блины классические тонкие",
+    "group": "af03ae4d-723e-4154-91b6-3de7e9f85adf",
+    "id": "df812089-7538-427a-9f3e-885cb36cd235",
+    "name": "Блины классические",
+    "range": "219c105c-baad-401d-abb9-2b39177b8417",
+    "unique_code": "df812089-7538-427a-9f3e-885cb36cd235"
+  },
+  {
+    "id": "af03ae4d-723e-4154-91b6-3de7e9f85adf",
+    "name": "Блюда",
+    "unique_code": "af03ae4d-723e-4154-91b6-3de7e9f85adf"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "base": "20112b2d-4a32-4fc6-bb62-7a39e229cd5b",
+    "base_range": "20112b2d-4a32-4fc6-bb62-7a39e229cd5b",
+    "coefficient": 1000,
+    "conversion_factor": 1000,
+    "id": "38869722-d7a9-42de-ba6a-701322275e10",
+    "name": "килограмм",
+    "unique_code": "38869722-d7a9-42de-ba6a-701322275e10",
+    "value": 1000
+  },
+  {
+    "base": null,
+    "base_range": null,
+    "coefficient": 1,
+    "conversion_factor": 1,
+    "id": "20112b2d-4a32-4fc6-bb62-7a39e229cd5b",
+    "name": "грамм",
+    "unique_code": "20112b2d-4a32-4fc6-bb62-7a39e229cd5b",
+    "value": 1
+  }
+]
