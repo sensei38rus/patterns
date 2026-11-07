@@ -1,0 +1,141 @@
+{
+  "result": {
+    "group_model": [
+      {
+        "type": "Src.Models.group_model.group_model",
+        "name": "Ингредиенты",
+        "unique_code": "d2869b8acb92420fa5329f4225c16652"
+      }
+    ],
+    "nomenclature_model": [
+      {
+        "type": "Src.Models.nomenclature_model.nomenclature_model",
+        "group_code": "d2869b8acb92420fa5329f4225c16652",
+        "name": "Пшеничная мука",
+        "range_code": "c6ea3278760541718a4261345a371ee6",
+        "unique_code": "3d83816b707045c7bff0fcaca18b8306"
+      },
+      {
+        "type": "Src.Models.nomenclature_model.nomenclature_model",
+        "group_code": "d2869b8acb92420fa5329f4225c16652",
+        "name": "Сахар",
+        "range_code": "c6ea3278760541718a4261345a371ee6",
+        "unique_code": "c2c72d07da93476bb9bd951f1cc80b24"
+      },
+      {
+        "type": "Src.Models.nomenclature_model.nomenclature_model",
+        "group_code": "d2869b8acb92420fa5329f4225c16652",
+        "name": "Сливочное масло",
+        "range_code": "c6ea3278760541718a4261345a371ee6",
+        "unique_code": "d81f6f85e27440e387125904862eff8f"
+      },
+      {
+        "type": "Src.Models.nomenclature_model.nomenclature_model",
+        "group_code": "d2869b8acb92420fa5329f4225c16652",
+        "name": "Яйцо (шт)",
+        "range_code": "95e3838c191f4036b4af2aedd892d6cf",
+        "unique_code": "3911f779e838407aba1e3fdbc266c471"
+      },
+      {
+        "type": "Src.Models.nomenclature_model.nomenclature_model",
+        "group_code": "d2869b8acb92420fa5329f4225c16652",
+        "name": "Ванилин",
+        "range_code": "d437fb99e4534faf8450260c8250c4f9",
+        "unique_code": "c14db9e38a214aa8ab118890adc1d31b"
+      }
+    ],
+    "range_model": [
+      {
+        "type": "Src.Models.range_model.range_model",
+        "base_code": "",
+        "name": "Грамм",
+        "unique_code": "d437fb99e4534faf8450260c8250c4f9",
+        "value": 1
+      },
+      {
+        "type": "Src.Models.range_model.range_model",
+        "base_code": "d437fb99e4534faf8450260c8250c4f9",
+        "name": "Коллограмм",
+        "unique_code": "c6ea3278760541718a4261345a371ee6",
+        "value": 1000
+      },
+      {
+        "type": "Src.Models.range_model.range_model",
+        "base_code": "",
+        "name": "Штуки",
+        "unique_code": "95e3838c191f4036b4af2aedd892d6cf",
+        "value": 1
+      }
+    ],
+    "receipt_model": [
+      {
+        "type": "Src.Models.receipt_model.receipt_model",
+        "brutto": 256,
+        "comments": "",
+        "items": [
+          {
+            "type": "Src.Models.ingredient_model.ingredient_model",
+            "base_code": "",
+            "brutto": 100,
+            "group_code": "d2869b8acb92420fa5329f4225c16652",
+            "name": "Пшеничная мука",
+            "netto": 100,
+            "range_code": "c6ea3278760541718a4261345a371ee6",
+            "unique_code": "7b06fc89492348baaf87096d4f70de61"
+          },
+          {
+            "type": "Src.Models.ingredient_model.ingredient_model",
+            "base_code": "",
+            "brutto": 80,
+            "group_code": "d2869b8acb92420fa5329f4225c16652",
+            "name": "Сахар",
+            "netto": 80,
+            "range_code": "c6ea3278760541718a4261345a371ee6",
+            "unique_code": "68f35a85603448fcaa416be2d77fd2a4"
+          },
+          {
+            "type": "Src.Models.ingredient_model.ingredient_model",
+            "base_code": "",
+            "brutto": 70,
+            "group_code": "d2869b8acb92420fa5329f4225c16652",
+            "name": "Сливочное масло",
+            "netto": 70,
+            "range_code": "c6ea3278760541718a4261345a371ee6",
+            "unique_code": "b1660cf48ca847deb73c061869bcb5cd"
+          },
+          {
+            "type": "Src.Models.ingredient_model.ingredient_model",
+            "base_code": "",
+            "brutto": 1,
+            "group_code": "d2869b8acb92420fa5329f4225c16652",
+            "name": "Яйца",
+            "netto": 1,
+            "range_code": "95e3838c191f4036b4af2aedd892d6cf",
+            "unique_code": "23d8eb8c247f476381b5c36b03e96d8b"
+          },
+          {
+            "type": "Src.Models.ingredient_model.ingredient_model",
+            "base_code": "",
+            "brutto": 5,
+            "group_code": "d2869b8acb92420fa5329f4225c16652",
+            "name": "Ванилин",
+            "netto": 5,
+            "range_code": "d437fb99e4534faf8450260c8250c4f9",
+            "unique_code": "5e46805c07c6415a917b7e3bc7d91e68"
+          }
+        ],
+        "name": "",
+        "netto": 256,
+        "unique_code": "60f3368485cd4aeab5c5b31cec936c0d"
+      }
+    ],
+    "storage_model": [
+      {
+        "type": "Src.Models.storage_model.storage_model",
+        "address": "Иркутск, ул. Высокого Полета, д.100",
+        "name": "Основной склад",
+        "unique_code": "cbcf8772998e4f61ad1bce37e30b18df"
+      }
+    ]
+  }
+}
