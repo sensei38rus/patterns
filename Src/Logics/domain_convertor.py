@@ -110,7 +110,8 @@ class domain_convertor(abstract_convertor):
         # Ссылки на другие модели откладываем до полной загрузки данных,
         # т.к. порядок моделей в Json не гарантирован
         for field_name in common.get_fields( dto, is_common=True ):
-            if field_name.endswith("_code"):
+            # unique_code - это идентификатор модели, а не ссылка на другую модель
+            if field_name.endswith("_code") and field_name != "unique_code":
                 code = getattr( dto, field_name )
                 if code:
                     context["links"].append( ( model, field_name[ : -len("_code") ], code ) )
