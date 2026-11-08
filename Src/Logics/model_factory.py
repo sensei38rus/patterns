@@ -28,6 +28,10 @@ class model_factory(abstract_model_factory):
 
     def __init__(self):
         super().__init__()
+        # Синглтон: повторная инициализация не сбрасывает зарегистрированные пары
+        if self.__mapping:
+            return
+
         self.__mapping = {}
         pairs = [
             (receipt_dto, receipt_model),

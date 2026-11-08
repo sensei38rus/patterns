@@ -46,7 +46,7 @@ class dict_convertor(abstract_convertor):
         if own_context:
             context = domain_convertor.create_context()
 
-        if self.__is_domain(source):
+        if domain_convertor.is_domain(source):
             result = self.__convert_factory.create_domain().deserialize( source, context )
         else:
             result = {}
@@ -62,11 +62,3 @@ class dict_convertor(abstract_convertor):
             domain_convertor.resolve_links(context)
 
         return result
-
-    """
-    Признак того, что словарь описывает доменную модель
-    (содержит маркер типа и уникальный код)
-    """
-    @staticmethod
-    def __is_domain(source: any) -> bool:
-        return isinstance(source, dict) and "type" in source and "unique_code" in source

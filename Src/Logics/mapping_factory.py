@@ -28,6 +28,10 @@ class mapping_factory(abstract_mapping_factory):
 
     def __init__(self):
         super().__init__()
+        # Синглтон: повторная инициализация не сбрасывает зарегистрированные пары
+        if self.__mapping:
+            return
+
         self.__mapping = {
                     receipt_dto: receipt_model,
                     range_dto: range_model,
@@ -41,7 +45,8 @@ class mapping_factory(abstract_mapping_factory):
                     float:float,
                     bool: bool,
                     str: str,
-                    list: list
+                    list: list,
+                    dict: dict
                 }
 
     # Singletone
@@ -49,6 +54,12 @@ class mapping_factory(abstract_mapping_factory):
         if not hasattr(cls, 'instance'):
             cls.instance = super(mapping_factory, cls).__new__(cls)
         return cls.instance      
+
+    """
+    Зарегистрировать пару Dto и доменной модели
+    """
+    def register(self, dto_type: Type, domain_type: Type) -> None:
+        self.__mapping[dto_type] = domain_type
 
     """
     Сконвертировать доменную модель в Dto

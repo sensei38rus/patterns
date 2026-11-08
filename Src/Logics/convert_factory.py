@@ -25,7 +25,11 @@ class convert_factory(abstract_convert_factory):
 
     def __init__(self):
         super().__init__()
-      
+
+        # Синглтон: повторная инициализация не сбрасывает зарегистрированные типы
+        if self.__mapping:
+            return
+
         self.__mapping_factory = mapping_factory()
         self.__mapping = {
                     int: basic_convertor(),

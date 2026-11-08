@@ -60,10 +60,11 @@ class domain_convertor(abstract_convertor):
         for item in fields:
             value = getattr( dto, item )
 
-            # Доменные коллекции (состав рецепта) сериализируем полностью,
-            # а не кодами, чтобы модели можно было восстановить при загрузке
+            # Вложенные структуры модели (состав рецепта, вложенные словари)
+            # сериализируем полностью, а не кодами, чтобы данные можно
+            # было восстановить при загрузке
             model_value = getattr( object, item, None )
-            if isinstance(model_value, list):
+            if isinstance(model_value, (list, dict)):
                 value = model_value
 
             convertor = self.__convert_factory.create( value )
@@ -93,9 +94,11 @@ class domain_convertor(abstract_convertor):
         # Фабрика моделей создает Dto по маркеру типа
         dto = self.__model_factory.create_dto( source.get("type") )
 
-        # Заполняем Dto простыми полями из словаря
+        # Простые поля переносим в Dto. Тип, списки и вложенные словари
+        # сюда не попадают: тип читает фабрика моделей, а структуры
+        # обрабатываются отдельно после создания модели
         for key, value in source.items():
-            if key in ("type", "items") or value is None:
+            if value is None or isinstance(value, (list, dict)):
                 continue
             if hasattr(dto, key):
                 setattr( dto, key, value )
@@ -105,27 +108,47 @@ class domain_convertor(abstract_convertor):
         if model is None:
             raise operation_exception(f"Невозможно сопоставить тип {source.get('type')}!")
 
-        context["registry"][ model.unique_code ] = model
+        # Одна и та же модель может встречаться в дампе несколько раз
+        # (в общем наборе и в составе другого объекта) - используем уже
+        # загруженный экземпляр, чтобы все ссылки вели на один объект
+        registered = context["registry"].get( model.unique_code )
+        if registered is None:
+            context["registry"][ model.unique_code ] = model
+        else:
+            model = registered
 
         # Ссылки на другие модели откладываем до полной загрузки данных,
-        # т.к. порядок моделей в Json не гарантирован
+        # т.к. порядок моделей в Json не гарантирован.
+        # Поле ссылки в Dto заканчивается на "_code", а соответствующее
+        # свойство модели (group, range, base, ...) должно существовать
+        # и быть записываемым - по этому признаку ссылка отличается
+        # от идентификатора (unique_code не является ссылкой)
         for field_name in common.get_fields( dto, is_common=True ):
-            # unique_code - это идентификатор модели, а не ссылка на другую модель
-            if field_name.endswith("_code") and field_name != "unique_code":
-                code = getattr( dto, field_name )
-                if code:
-                    context["links"].append( ( model, field_name[ : -len("_code") ], code ) )
+            if not field_name.endswith("_code"):
+                continue
 
-        # Вложенные доменные модели (состав рецепта) загружаем рекурсивно
-        items = source.get("items")
-        if isinstance(items, list):
-            for element in items:
-                if not isinstance(element, dict):
-                    continue
-                child = self.deserialize( element, context )
-                add = getattr( model, "add", None )
-                if callable(add):
-                    add( child )
+            reference = field_name[ : -len("_code") ]
+            if not domain_convertor.__can_attach( model, reference ):
+                continue
+
+            code = getattr( dto, field_name )
+            if code:
+                context["links"].append( ( model, reference, code ) )
+
+        # Вложенные доменные модели и структуры загружаем рекурсивно
+        # с тем же контекстом и привязываем к модели через сеттер свойства
+        for key, value in source.items():
+            if isinstance(value, dict):
+                inner = self.deserialize(value, context) if domain_convertor.is_domain(value) else value
+                domain_convertor.__attach( model, key, inner )
+            elif isinstance(value, list):
+                elements = [
+                    self.deserialize(item, context)
+                    if isinstance(item, dict) and domain_convertor.is_domain(item)
+                    else item
+                    for item in value
+                ]
+                domain_convertor.__attach( model, key, elements )
 
         if own_context:
             domain_convertor.resolve_links(context)
@@ -143,6 +166,39 @@ class domain_convertor(abstract_convertor):
 
 
     """
+    Признак того, что словарь описывает доменную модель
+    (содержит маркер типа и уникальный код)
+    """
+    @staticmethod
+    def is_domain(source: any) -> bool:
+        return isinstance(source, dict) and "type" in source and "unique_code" in source
+
+
+    """
+    Признак того, что модели можно присвоить значение по имени свойства
+    """
+    @staticmethod
+    def __can_attach(model: abstact_model, field_name: str) -> bool:
+        descriptor = getattr( type(model), field_name, None )
+        return isinstance(descriptor, property) and descriptor.fset is not None
+
+
+    """
+    Присвоить значение свойству модели. Единственный способ передать
+    конвертору вложенные данные - сеттер свойства, поэтому отсутствие
+    сеттера является ошибкой модели, а не поводом терять данные
+    """
+    @staticmethod
+    def __attach(model: abstact_model, field_name: str, value: any) -> None:
+        if not domain_convertor.__can_attach(model, field_name):
+            raise operation_exception(
+                f"Модель {type(model).__name__} не содержит записываемого свойства {field_name}!"
+            )
+
+        setattr( model, field_name, value )
+
+
+    """
     Разрешить накопленные ссылки между моделями по уникальному коду
     """
     @staticmethod
@@ -155,4 +211,4 @@ class domain_convertor(abstract_convertor):
                 # Модель, на которую ссылаемся, отсутствует в наборе - пропускаем
                 continue
 
-            setattr( model, field_name, target )
+            domain_convertor.__attach( model, field_name, target )

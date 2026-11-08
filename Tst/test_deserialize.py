@@ -255,6 +255,77 @@ def test_return_storage_data_convertor_deserialize_storage_manager():
 
 
 """
+Проверить десериализацию рецепта, если в дампе нет ключа items.
+Ожидается: модель загружается с пустым составом, веса равны нулю
+"""
+def test_return_receipt_convertor_deserialize_without_items():
+    # Подготовка
+    settings = settings_model()
+    settings.first_start = True
+    manager = storage_manager(settings)
+    manager.build()
+    receipt = manager.data[storage_manager.receipt_key()][0]
+    source = convertor().serialize(receipt)
+    del source["result"]["items"]
+
+    # Действие
+    loaded = convertor().deserialize(json.dumps(source, ensure_ascii=False))["result"]
+
+    # Проверки
+    assert type(loaded) is receipt_model
+    assert loaded.items == []
+    assert loaded.brutto == 0
+    assert loaded.netto == 0
+
+
+"""
+Проверить десериализацию одного рецепта, представленного в дампе дважды.
+Ожидается: повторная встреча переиспользует уже загруженный экземпляр,
+а не создает второй объект с тем же уникальным кодом
+"""
+def test_return_receipt_convertor_deserialize_reuses_duplicate():
+    # Подготовка
+    settings = settings_model()
+    settings.first_start = True
+    manager = storage_manager(settings)
+    manager.build()
+    receipt = manager.data[storage_manager.receipt_key()][0]
+    source = {
+        storage_manager.group_key(): manager.data[storage_manager.group_key()],
+        storage_manager.range_key(): manager.data[storage_manager.range_key()],
+        storage_manager.receipt_key(): [receipt, receipt]
+    }
+
+    # Действие
+    loaded = convertor().deserialize(convertor().serialize(source))["result"]
+
+    # Проверки
+    first, second = loaded[storage_manager.receipt_key()]
+    assert first is second
+    assert_model_equal(receipt, first)
+    assert len(first.items) == len(receipt.items)
+
+
+"""
+Проверить десериализацию коллекции, для которой у модели нет записываемого свойства.
+Ожидается: operation_exception - явная ошибка вместо тихой потери данных
+"""
+def test_raise_operation_exception_convertor_deserialize_unknown_collection():
+    # Подготовка
+    settings = settings_model()
+    settings.first_start = True
+    manager = storage_manager(settings)
+    manager.build()
+    receipt = manager.data[storage_manager.receipt_key()][0]
+    source = convertor().serialize(receipt)
+    source["result"]["extra_collection"] = []
+
+    # Действие и проверки
+    with pytest.raises(operation_exception):
+        convertor().deserialize(json.dumps(source, ensure_ascii=False))
+
+
+"""
 Проверить загрузку сохраненного дампа Dumps/storage_data.json.
 Ожидается: все данные читаются из файла, ссылки разрешены,
 повторная выгрузка совпадает с содержимым файла
