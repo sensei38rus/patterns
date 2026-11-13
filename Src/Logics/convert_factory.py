@@ -25,7 +25,11 @@ class convert_factory(abstract_convert_factory):
 
     def __init__(self):
         super().__init__()
-      
+
+        # Синглтон: повторная инициализация не сбрасывает зарегистрированные типы
+        if self.__mapping:
+            return
+
         self.__mapping_factory = mapping_factory()
         self.__mapping = {
                     int: basic_convertor(),
@@ -33,7 +37,7 @@ class convert_factory(abstract_convert_factory):
                     str: basic_convertor(),
                     datetime: datetime_convertor(),
                     list: list_convertor(self, self.__mapping_factory),
-                    dict: dict_convertor(),
+                    dict: dict_convertor(self),
                     entity_model: domain_convertor(self, self.__mapping_factory), 
                     abstact_model: domain_convertor(self, self.__mapping_factory)
                 }
@@ -54,3 +58,9 @@ class convert_factory(abstract_convert_factory):
                 return convertor
         
         raise operation_exception(f"Указанный тип {type(source).__name__} не поддерживается!")
+
+    """
+    Создать конвертер доменных моделей
+    """
+    def create_domain(self) -> abstract_convertor:
+        return self.__mapping[ entity_model ]

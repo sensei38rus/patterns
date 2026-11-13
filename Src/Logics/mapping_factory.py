@@ -2,6 +2,7 @@ from Src.Core.abstract_mapping_factory import abstract_mapping_factory
 from typing import Any, Dict, Type
 from Src.Core.abstract_model import abstact_model
 from Src.Core.abstract_dto import abstract_dto
+from Src.Core.common import common
 from Src.Dtos.receipt_dto import receipt_dto
 from Src.Models.receipt_model import receipt_model
 from Src.Dtos.range_dto import range_dto 
@@ -14,6 +15,8 @@ from Src.Dtos.ingredient_dto import ingredient_dto
 from Src.Models.ingredient_model import ingredient_model
 from Src.Dtos.nomenclature_dto import nomenclature_dto
 from Src.Models.nomenclature_model import nomenclature_model
+from Src.Dtos.storage_dto import storage_dto
+from Src.Models.storage_model import storage_model
 
 """
 Реализация абстрактной фабрики для маппинга данных
@@ -25,6 +28,10 @@ class mapping_factory(abstract_mapping_factory):
 
     def __init__(self):
         super().__init__()
+        # Синглтон: повторная инициализация не сбрасывает зарегистрированные пары
+        if self.__mapping:
+            return
+
         self.__mapping = {
                     receipt_dto: receipt_model,
                     range_dto: range_model,
@@ -32,12 +39,14 @@ class mapping_factory(abstract_mapping_factory):
                     group_dto: group_model,
                     ingredient_dto : ingredient_model,
                     nomenclature_dto: nomenclature_model,
+                    storage_dto: storage_model,
                     # Обычные типы
                     int:int,
                     float:float,
                     bool: bool,
                     str: str,
-                    list: list
+                    list: list,
+                    dict: dict
                 }
 
     # Singletone
@@ -45,6 +54,12 @@ class mapping_factory(abstract_mapping_factory):
         if not hasattr(cls, 'instance'):
             cls.instance = super(mapping_factory, cls).__new__(cls)
         return cls.instance      
+
+    """
+    Зарегистрировать пару Dto и доменной модели
+    """
+    def register(self, dto_type: Type, domain_type: Type) -> None:
+        self.__mapping[dto_type] = domain_type
 
     """
     Сконвертировать доменную модель в Dto
@@ -67,4 +82,30 @@ class mapping_factory(abstract_mapping_factory):
     Сконвертировать Dto в доменную модель
     """
     def to_model(self, source: object) -> object:
-        pass                                                
+        for dto_type, domain_type in self.__mapping.items():
+            if isinstance(source, dto_type):
+
+                if isinstance(source, abstract_dto):
+                    # Это Dto - создаем доменную модель и копируем простые поля
+                    model = domain_type()
+
+                    for field in common.get_fields( source, is_common=True ):
+                        value = getattr( source, field )
+
+                        # Пустые значения не переносим - значение по умолчанию
+                        # модели идентично (например name или comments)
+                        if value is None or value == "":
+                            continue
+
+                        # Пропускаем поля без сеттера (например brutto/netto у рецепта
+                        # пересчитываются автоматически) и отсутствующие у модели
+                        descriptor = getattr( type(model), field, None )
+                        if isinstance(descriptor, property) and descriptor.fset is not None:
+                            setattr( model, field, value )
+
+                    return model
+                else:
+                    # Это обычный тип
+                    return source
+
+        return None

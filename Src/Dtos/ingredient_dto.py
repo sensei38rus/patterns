@@ -16,6 +16,12 @@ class ingredient_dto (abstract_dto):
     # Код базового ингредиента
     __base_code: str = ""
 
+    # Код группы номенклатуры
+    __group_code: str = ""
+
+    # Код единицы измерения
+    __range_code: str = ""
+
     # Вес брутто
     __brutto: int = 0
 
@@ -56,6 +62,28 @@ class ingredient_dto (abstract_dto):
         self.__base_code = value.strip()
 
     """
+    Код группы номенклатуры
+    """
+    @property
+    def group_code(self) -> str:
+        return self.__group_code
+
+    @group_code.setter
+    def group_code(self, value: str) -> None:
+        self.__group_code = value.strip()
+
+    """
+    Код единицы измерения
+    """
+    @property
+    def range_code(self) -> str:
+        return self.__range_code
+
+    @range_code.setter
+    def range_code(self, value: str) -> None:
+        self.__range_code = value.strip()
+
+    """
     Вес брутто
     """
     @property
@@ -91,5 +119,11 @@ class ingredient_dto (abstract_dto):
         
         if source.base is not None:
             dto.base_code = source.base.unique_code
+
+        if source.group is not None:
+            dto.group_code = source.group.unique_code
+
+        if source.range is not None:
+            dto.range_code = source.range.unique_code
             
         return dto

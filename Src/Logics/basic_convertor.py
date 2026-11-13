@@ -29,5 +29,6 @@ class basic_convertor(abstract_convertor):
    """
    Выполнить десериализацию
    """
-   def deserialize(self, source: dict ) -> object:
-        pass
+   def deserialize(self, source: dict, context: dict = None ) -> object:
+        super().deserialize(source, context)
+        return source

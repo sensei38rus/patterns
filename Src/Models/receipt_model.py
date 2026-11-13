@@ -53,22 +53,31 @@ class receipt_model(entity_model):
     def items(self) -> list[ingredient_model]:
         return self.__items    
 
+    @items.setter
+    def items(self, value: list[ingredient_model]) -> None:
+        validator.validate(value, list)
+        for ingredient in value:
+            validator.validate(ingredient, ingredient_model)
+
+        self.__items = value
+        self.__refresh()
+
     """
     Добавить в состав новый ингредиент
     """
     def add(self, ingredient:ingredient_model) -> None:
         validator.validate(ingredient, ingredient_model)
-        self.__items.append( ingredient )
-        self.__refresh()
+        self.items = self.__items + [ingredient]
 
     """
     Удалить из состава ингредиент
     """
     def delete(self, ingredient:ingredient_model) -> None:
         validator.validate(ingredient, ingredient_model)
-        if ingredient in self.__items: 
-            self.__items.remove(ingredient) 
-            self.__refresh()
+        if ingredient in self.__items:
+            items = list(self.__items)
+            items.remove(ingredient)
+            self.items = items
 
     """
     Пересчитать вес брутто и нетто
@@ -80,11 +89,3 @@ class receipt_model(entity_model):
             self.__brutto += item.brutto
             self.__netto += item.netto
 
-
-    """
-    Уникальный код
-    """
-    @property
-    def unique_code(self) -> str:
-        super
-        return self._abstact_model__unique_code      
