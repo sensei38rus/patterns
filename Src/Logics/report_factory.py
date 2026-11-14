@@ -52,6 +52,24 @@ class report_factory(abstract_report_factory):
 
 
     """
+    Получить список всех форматов, доступных для построения отчетов
+    """
+    def formats(self) -> list:
+        result = []
+
+        for item in report_type_enum:
+            builder = self.__mapping.get( item )
+            result.append({
+                "code": item.value,
+                "name": item.name,
+                "content_type": getattr(builder, "content_type", None) if builder else None,
+                "is_default": self.__settings.default_report_type == item
+            })
+
+        return result
+
+
+    """
     Текущие настройки
     """
     @property

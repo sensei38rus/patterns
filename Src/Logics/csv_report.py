@@ -11,6 +11,8 @@ from Src.Core.entity_model import entity_model
 Реализация CSV представления отчета по рецепту
 """
 class csv_report(abstract_report):
+    # Mime тип результата
+    content_type:str = "text/plain"
 
     """
     Переопределенный метод формирования отчета
@@ -30,6 +32,6 @@ class csv_report(abstract_report):
               
         result = report_result_dto()
         result.text = "\n".join(lines) 
-        result.format = "text/plain"
+        result.format = self.content_type
     
         return result

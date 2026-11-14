@@ -11,6 +11,13 @@ class argument_exception(Exception):
 class operation_exception(Exception):
     pass    
     
+"""
+Исключение при нарушении правил целостности данных
+(например, попытка удалить или изменить код связанной сущности)
+"""
+class conflict_exception(operation_exception):
+    pass    
+    
 
 """
 Набор проверок данных
