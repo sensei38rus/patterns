@@ -5,14 +5,14 @@ from Src.Core.entity_model import entity_model
 # Модель организации
 class company_model(entity_model):
     __inn:int = 0
-    __bic:str = 0
+    __bic:str = ""
     __corr_account:int = 0
     __account:int = 0
     __ownership:str = ""
 
     # ИНН : 12 симв
-    # Счет 11 симв
-    # Корреспондентский счет 11 симв
+    # Счет 20 симв
+    # Корреспондентский счет 20 симв
     # БИК 9 симв
     # Наименование
     # Вид собственности 5 симв
@@ -47,7 +47,7 @@ class company_model(entity_model):
         
     @corr_account.setter
     def corr_account(self, value:int):
-        validator.validate(value, int, 11)
+        validator.validate(value, int, 20)
         self.__corr_account = value
 
     # Банковский счет
@@ -57,7 +57,7 @@ class company_model(entity_model):
     
     @account.setter
     def account(self, value:int):
-        validator.validate(value, int, 11)
+        validator.validate(value, int, 20)
         self.__account = value
 
     # Вид собственности

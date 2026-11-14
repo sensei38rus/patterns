@@ -1,0 +1,321 @@
+openapi: 3.0.3
+
+info:
+  title: Ромашка - API системы отчетности
+  description: |
+    REST API системы отчетности для сети ресторанов "Ромашка".
+
+    Разделы:
+    * **Форматы** - список форматов для построения отчетов;
+    * **Отчеты** - получение отчета по доменной сущности в формате по умолчанию;
+    * **Доменные сущности** - CRUD операции над сущностями хранилища.
+
+    При изменении и удалении доменных сущностей выполняется проверка
+    ссылочной целостности: запрещено удалять сущность или менять ее код,
+    если на нее ссылаются другие доменные сущности.
+  version: "1.0.0"
+
+servers:
+  - url: /
+
+tags:
+  - name: formats
+    description: Форматы построения отчетов
+  - name: reports
+    description: Построение отчетов
+  - name: entities
+    description: CRUD операции с доменными сущностями
+
+paths:
+
+  /api/formats:
+    get:
+      tags: [formats]
+      operationId: main.get_formats
+      summary: Получить список всех форматов для построения отчетов
+      description: Возвращает JSON список доступных форматов (код, наименование, mime тип, признак формата по умолчанию)
+      responses:
+        "200":
+          description: Список форматов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportFormat"
+
+  /api/get_default_report:
+    get:
+      tags: [reports]
+      operationId: main.get_default_report
+      summary: Получить отчет в формате по умолчанию
+      description: Строит отчет по доменной сущности в формате, заданном настройками приложения
+      parameters:
+        - name: entity
+          in: query
+          required: true
+          description: Ключ доменной сущности (например range_model)
+          schema:
+            type: string
+        - name: unique_code
+          in: query
+          required: true
+          description: Уникальный код сущности
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Отчет
+          content:
+            text/plain:
+              schema:
+                type: string
+        "404":
+          description: Сущность не найдена
+          content:
+            text/plain:
+              schema:
+                type: string
+        "500":
+          description: Ошибка построения отчета
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/entities:
+    get:
+      tags: [entities]
+      operationId: main.get_entities
+      summary: Получить список доменных сущностей
+      description: Возвращает JSON список ключей доменных сущностей и их описаний
+      responses:
+        "200":
+          description: Список доменных сущностей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntityInfo"
+
+  /api/entities/{entity}:
+    get:
+      tags: [entities]
+      operationId: main.get_entity_list
+      summary: Получить список сущностей указанного типа
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      responses:
+        "200":
+          description: Список сущностей в формате Json
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [entities]
+      operationId: main.create_entity
+      summary: Добавить новую доменную сущность
+      description: |
+        Создает сущность из тела запроса. Если маркер `type` не указан,
+        он определяется по ключу коллекции. Ссылки `*_code` разрешаются
+        по существующим сущностям хранилища.
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Entity"
+      responses:
+        "201":
+          description: Сущность создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/entities/{entity}/{unique_code}:
+    get:
+      tags: [entities]
+      operationId: main.get_entity
+      summary: Получить доменную сущность по уникальному коду
+      parameters:
+        - $ref: "#/components/parameters/entity"
+        - $ref: "#/components/parameters/unique_code"
+      responses:
+        "200":
+          description: Сущность
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [entities]
+      operationId: main.update_entity
+      summary: Изменить доменную сущность
+      description: |
+        Изменяются только поля, переданные в теле запроса.
+        Изменение уникального кода запрещено, если сущность связана
+        с другой доменной сущностью.
+      parameters:
+        - $ref: "#/components/parameters/entity"
+        - $ref: "#/components/parameters/unique_code"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Entity"
+      responses:
+        "200":
+          description: Сущность изменена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      tags: [entities]
+      operationId: main.delete_entity
+      summary: Удалить доменную сущность
+      description: |
+        Удаление запрещено, если на сущность ссылаются другие
+        доменные сущности (возвращается код 409).
+      parameters:
+        - $ref: "#/components/parameters/entity"
+        - $ref: "#/components/parameters/unique_code"
+      responses:
+        "204":
+          description: Сущность удалена
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+components:
+
+  parameters:
+    entity:
+      name: entity
+      in: path
+      required: true
+      description: Ключ доменной сущности
+      schema:
+        type: string
+    unique_code:
+      name: unique_code
+      in: path
+      required: true
+      description: Уникальный код сущности
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Некорректные данные запроса
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Сущность не найдена
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: |
+        Конфликт: сущность связана с другими доменными сущностями
+        либо код уже используется
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+
+    ReportFormat:
+      type: object
+      description: Формат для построения отчетов
+      properties:
+        code:
+          type: integer
+          description: Код формата
+        name:
+          type: string
+          description: Наименование формата
+        content_type:
+          type: string
+          nullable: true
+          description: Mime тип результата
+        is_default:
+          type: boolean
+          description: Признак формата по умолчанию
+      required:
+        - code
+        - name
+        - is_default
+
+    EntityInfo:
+      type: object
+      description: Описание доменной сущности
+      properties:
+        key:
+          type: string
+          description: Ключ коллекции (имя доменной модели)
+        description:
+          type: string
+          description: Описание сущности
+      required:
+        - key
+        - description
+
+    Entity:
+      type: object
+      description: |
+        Плоское представление доменной сущности.
+        Ссылки на другие сущности передаются их уникальными кодами
+        в полях вида "*_code".
+        При создании маркер type может быть не указан - он определяется
+        по ключу коллекции. При изменении достаточно передать изменяемые поля
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          description: Полное имя типа доменной модели
+        unique_code:
+          type: string
+          description: Уникальный код сущности
+        name:
+          type: string
+          description: Наименование
+
+    Error:
+      type: object
+      description: Ошибка выполнения операции
+      properties:
+        message:
+          type: string
+          description: Описание ошибки
+      required:
+        - message
