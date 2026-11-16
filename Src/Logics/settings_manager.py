@@ -69,8 +69,7 @@ class settings_manager(abstract_manager):
               return False
 
         try: 
-            payload = settings_manager.__to_domain_payload(self.__data)
-            self.__settings = convertor().deserialize(payload)
+            self.__settings = settings_manager.__to_domain_payload(self.__data)
             return True        
         except Exception as ex:
             self.__inner_error = str(ex)
@@ -78,39 +77,61 @@ class settings_manager(abstract_manager):
 
 
     """
-    Привести загруженные данные к формату доменной модели.
+    Привести загруженные данные к доменной модели настроек.
     Поддерживается формат с маркером типа ({"type": ...}) и плоский формат
-    старого образца, где данные организации вынесены в ключи "company_*"
+    старого образца, где данные организации вынесены в ключи "company_*".
+    Готовый payload десериализуется общим механизмом (convertor) по тому же
+    принципу, что и доменные сущности хранилища
     """
     @staticmethod
-    def __to_domain_payload(data: dict) -> dict:
+    def __to_domain_payload(data: dict) -> settings_model:
         if not isinstance(data, dict):
             raise operation_exception("Настройки должны быть представлены словарем!")
 
+        # Дамп общего механизма сериализации ({"result": {...}})
+        if "type" not in data and isinstance(data.get("result"), dict):
+            data = data["result"]
+
         # Данные уже описаны в формате доменной модели
         if "type" in data:
-            return data
+            payload = dict(data)
+            # Маркер уникального кода обязателен для распознавания доменной модели
+            payload.setdefault("unique_code", uuid.uuid4().hex)
 
-        payload = {
-            "type": settings_model().type,
-            "unique_code": uuid.uuid4().hex
-        }
+            # Вложенной организации добавляем маркеры доменной модели
+            company = payload.get("company")
+            if isinstance(company, dict):
+                company = dict(company)
+                marker = company_model()
+                company.setdefault("type", marker.type)
+                company.setdefault("unique_code", marker.unique_code)
+                payload["company"] = company
+        else:
+            payload = {
+                "type": settings_model().type,
+                "unique_code": uuid.uuid4().hex
+            }
 
-        company_payload = {}
-        for key, value in data.items():
-            if key.startswith("company_"):
-                company_payload[ key[ len("company_") : ] ] = value
-            else:
-                payload[ key ] = value
+            company_payload = {}
+            for key, value in data.items():
+                if key.startswith("company_"):
+                    company_payload[ key[ len("company_") : ] ] = value
+                else:
+                    payload[ key ] = value
 
-        # Данные организации преобразуются во вложенную доменную модель
-        if len(company_payload) > 0:
-            company = company_model()
-            company_payload.setdefault("type", company.type)
-            company_payload.setdefault("unique_code", company.unique_code)
-            payload["company"] = company_payload
+            # Данные организации преобразуются во вложенную доменную модель
+            if len(company_payload) > 0:
+                company = company_model()
+                company_payload.setdefault("type", company.type)
+                company_payload.setdefault("unique_code", company.unique_code)
+                payload["company"] = company_payload
 
-        return payload
+        # Десериализация построенного payload в доменную модель
+        result = convertor().deserialize(payload)
+        if not isinstance(result, settings_model):
+            raise operation_exception("Некорректный формат настроек: не удалось выполнить десериализацию!")
+
+        return result
 
 
     """
