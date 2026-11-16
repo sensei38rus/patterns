@@ -8,7 +8,8 @@ from Src.Core.validator import validator, operation_exception, argument_exceptio
 from Src.Models.ingredient_model import ingredient_model
 from Src.Models.receipt_model import receipt_model
 from Src.Core.abstract_model import abstact_model
-from Src.Core.common import common
+from Src.Services.registry_service import registry_service
+from Src.Services.reference_service import reference_service
 
 """
 Реализация менеджера для управления и кеширования доменных сущностей
@@ -102,12 +103,7 @@ class storage_manager(abstract_manager):
     на существующие сущности
     """
     def registry(self) -> dict:
-        result = {}
-        for items in self.__data.values():
-            for item in items:
-                if isinstance(item, abstact_model):
-                    result[ item.unique_code ] = item
-        return result
+        return registry_service.build(self.__data)
 
 
     """
@@ -198,50 +194,7 @@ class storage_manager(abstract_manager):
     Проверяются свойства-модели, списки и вложенные структуры
     """
     def references(self, target: abstact_model) -> list:
-        result = []
-        if not isinstance(target, abstact_model):
-            return result
-
-        visited = set()
-        for key, items in self.__data.items():
-            for item in items:
-                if item is target:
-                    continue
-                if storage_manager.__has_reference(item, target.unique_code, visited):
-                    result.append({
-                        "entity": key,
-                        "unique_code": item.unique_code,
-                        "name": str(getattr(item, "name", ""))
-                    })
-
-        return result
-
-
-    """
-    Проверить, содержит ли значение ссылку на сущность с указанным кодом
-    """
-    @staticmethod
-    def __has_reference(value, target_code: str, visited: set) -> bool:
-        if isinstance(value, abstact_model):
-            if value.unique_code == target_code:
-                return True
-
-            if id(value) in visited:
-                return False
-            visited.add(id(value))
-
-            for field in common.get_fields(value, is_common=False):
-                if storage_manager.__has_reference(getattr(value, field, None), target_code, visited):
-                    return True
-            return False
-
-        if isinstance(value, (list, tuple, set)):
-            return any(storage_manager.__has_reference(item, target_code, visited) for item in value)
-
-        if isinstance(value, dict):
-            return any(storage_manager.__has_reference(item, target_code, visited) for item in value.values())
-
-        return False
+        return reference_service.find(self.__data, target)
 
 
     """
