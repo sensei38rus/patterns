@@ -478,3 +478,160 @@ def test_success_api_filter_entity_empty_result():
     # Проверки
     assert response.status_code == 200
     assert response.json() == []
+
+"""
+Проверить построение ОСВ через POST /api/osv с фильтрацией.
+На вход Dto фильтрации, в ответ ведомость с строками и итогами
+"""
+def test_success_api_post_osv_nomenclature():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "nomenclature_model",
+        "field": "name",
+        "value": "Сахар",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+
+    data = response.json()
+    assert data["entity"] == "nomenclature_model"
+    assert len(data["rows"]) == 1
+    assert data["rows"][0]["name"] == "Сахар"
+    assert "totals" in data
+    assert data["totals"]["turnover_debit"] == data["rows"][0]["turnover_debit"]
+    assert data["totals"]["closing_debit"] == data["rows"][0]["closing_debit"]
+
+"""
+Проверить построение ОСВ по рецептам (обороты брутто/нетто)
+"""
+def test_success_api_post_osv_receipt():
+    # Подготовка
+    client = __create_client()
+    items = client.get("/api/entities/receipt_model").json()
+    assert len(items) > 0
+    unique_code = items[0]["unique_code"]
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "receipt_model",
+        "field": "unique_code",
+        "value": unique_code,
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert data["entity"] == "receipt_model"
+    assert len(data["rows"]) == 1
+
+    row = data["rows"][0]
+    assert row["turnover_debit"] == float(items[0]["brutto"])
+    assert row["turnover_credit"] == float(items[0]["netto"])
+    assert row["closing_debit"] == float(items[0]["brutto"] - items[0]["netto"])
+
+"""
+Проверить построение ОСВ по единицам измерения с вложенным фильтром
+"""
+def test_success_api_post_osv_nested_filter():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "range_model",
+        "field": "base.name",
+        "value": "Грамм",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert data["entity"] == "range_model"
+    assert len(data["rows"]) >= 1
+    assert all(row["turnover_debit"] > 0 for row in data["rows"])
+    assert data["totals"]["turnover_debit"] > 0
+
+"""
+Проверить построение ОСВ с пустым результатом фильтрации.
+Ожидается: 200, пустые строки и нулевые итоги
+"""
+def test_success_api_post_osv_empty_result():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "nomenclature_model",
+        "field": "name",
+        "value": "Несуществующая позиция",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert data["rows"] == []
+    assert data["totals"]["turnover_debit"] == 0.0
+    assert data["totals"]["closing_debit"] == 0.0
+
+"""
+Проверить построение ОСВ без entity в теле запроса.
+Ожидается: 400
+"""
+def test_fail_api_post_osv_missing_entity():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "field": "name",
+        "value": "Сахар",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 400
+
+"""
+Проверить построение ОСВ с неизвестной сущностью.
+Ожидается: 404
+"""
+def test_fail_api_post_osv_unknown_entity():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "unknown_model",
+        "field": "name",
+        "value": "X",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 404
+
+"""
+Проверить построение ОСВ без field/value.
+Ожидается: 400
+"""
+def test_fail_api_post_osv_missing_field_value():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post("/api/osv", json={
+        "entity": "nomenclature_model",
+        "type": "EQUALS"
+    })
+
+    # Проверки
+    assert response.status_code == 400

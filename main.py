@@ -4,6 +4,7 @@ from Src.Logics.report_factory import report_factory
 from Src.Logics.convertor import convertor
 from Src.Logics.model_factory import model_factory
 from Src.Logics.filter_prototype import filter_prototype
+from Src.Logics.osv_prototype import osv_prototype
 from Src.Dtos.filter_dto import filter_dto
 from Src.Core.abstract_model import abstact_model
 from Src.Core.validator import argument_exception, operation_exception, conflict_exception
@@ -274,6 +275,36 @@ def filter_entity(entity: str, body):
         return __error(str(ex), 400)
 
     return [__to_dict(item) for item in result], 200
+
+"""
+Построить оборотно-сальдовую ведомость (ОСВ) с учетом фильтрации.
+На вход - Dto модели фильтрации (entity, field, value, type).
+Формирование ОСВ выполняется через прототип osv_prototype
+"""
+def post_osv(body):
+    if not isinstance(body, dict) or not body.get("entity"):
+        return __error("Условие фильтрации должно содержать entity!", 400)
+
+    entity = str(body.get("entity")).strip()
+    if entity not in storage_manager.domains():
+        return __error(f"Неизвестная доменная сущность {entity}!", 404)
+
+    try:
+        condition = filter_dto.from_dict(body)
+        condition.entity = entity
+    except (argument_exception, operation_exception, ValueError, TypeError) as ex:
+        return __error(f"Некорректное условие фильтрации: {ex}", 400)
+
+    if not condition.field or not condition.value:
+        return __error("Условие фильтрации должно содержать field и value!", 400)
+
+    try:
+        items = storage_manager.data[entity]
+        report = osv_prototype(condition).build(items)
+    except (argument_exception, operation_exception) as ex:
+        return __error(str(ex), 400)
+
+    return report.to_dict(), 200
 
 
 api.add_api("openapi.yaml", validate_responses=False, strict_validation=False)
