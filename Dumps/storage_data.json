@@ -4,6 +4,7 @@
       {
         "type": "Src.Models.group_model.group_model",
         "name": "Ингредиенты",
+        "parent_code": "",
         "unique_code": "d2869b8acb92420fa5329f4225c16652"
       }
     ],

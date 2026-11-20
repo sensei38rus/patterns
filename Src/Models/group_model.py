@@ -1,12 +1,34 @@
 from Src.Core.entity_model import entity_model
+from Src.Core.validator import validator, argument_exception
 
 """
 Модель группы номенклатуры
 """
 class group_model(entity_model):
+    # Группа-владелец (родительская группа)
+    __parent: "group_model" = None
 
     def __init__(self):
        super().__init__()
+
+    """
+    Группа-владелец (родительская группа)
+    """
+    @property
+    def parent(self) -> "group_model":
+        return self.__parent
+
+    @parent.setter
+    def parent(self, value: "group_model"):
+        if value is None:
+            self.__parent = None
+            return
+
+        validator.validate(value, group_model)
+        if value.unique_code == self.unique_code:
+            raise argument_exception("Группа не может быть владельцем самой себя!")
+
+        self.__parent = value
 
     """
     Фабричный метод - создать группу по умолчанию
@@ -17,12 +39,3 @@ class group_model(entity_model):
         result.name = "Ингредиенты"
 
         return result
-
-
-    
-    
-
-    
-
-
-    
