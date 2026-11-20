@@ -1,7 +1,7 @@
 from Src.Core.validator import argument_exception
 from Src.Dtos.filter_dto import filter_dto
 from Src.Dtos.filter_type_enum import filter_type_enum
-from Src.Logics.filter_service import filter_service
+from Src.Services.filter_service import filter_service
 from Src.Logics.storage_manager import storage_manager
 from Src.Models.settings_model import settings_model
 import pytest
