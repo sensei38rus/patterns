@@ -1,15 +1,15 @@
-from Src.Core.abstract_model import abstact_model
 from Src.Core.validator import argument_exception, operation_exception
 from Src.Dtos.filter_dto import filter_dto
 from Src.Dtos.filter_type_enum import filter_type_enum
 
 """
-Сервис фильтрации доменных сущностей по заданному Dto-условию
+Сервис фильтрации данных по заданному Dto-условию.
+Работает с доменными моделями и Dto-структурами
 """
 class filter_service:
 
     """
-    Отфильтровать список доменных сущностей по условию.
+    Отфильтровать список данных по условию.
     Поддерживаются варианты EQUALS (полное совпадение)
     и LIKE (вхождение строки) для полей name и unique_code
     """
@@ -23,11 +23,9 @@ class filter_service:
         result = []
 
         for item in items:
-            if not isinstance(item, abstact_model):
-                continue
-
+            # Поддерживаются и доменные модели, и Dto-структуры
             field_value = getattr(item, condition.field, None)
-            if field_value is None:
+            if field_value is None or not isinstance(field_value, (str, int)):
                 continue
 
             if filter_service.__match(str(field_value), condition):

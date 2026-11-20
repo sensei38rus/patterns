@@ -93,3 +93,14 @@ class filter_dto:
     def type(self, value: filter_type_enum) -> None:
         validator.validate(value, filter_type_enum)
         self.__type = value
+
+    """
+    Создать независимую копию условия фильтрации
+    """
+    def clone(self) -> "filter_dto":
+        dto = filter_dto()
+        dto.__entity = self.__entity
+        dto.__field = self.__field
+        dto.__value = self.__value
+        dto.__type = self.__type
+        return dto
