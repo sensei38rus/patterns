@@ -3,6 +3,8 @@ from Src.Logics.storage_manager import storage_manager
 from Src.Logics.report_factory import report_factory
 from Src.Logics.convertor import convertor
 from Src.Logics.model_factory import model_factory
+from Src.Logics.filter_prototype import filter_prototype
+from Src.Dtos.filter_dto import filter_dto
 from Src.Core.abstract_model import abstact_model
 from Src.Core.validator import argument_exception, operation_exception, conflict_exception
 import connexion
@@ -243,6 +245,35 @@ def delete_entity(entity: str, unique_code: str):
         return __error(str(ex), 404)
 
     return None, 204
+
+"""
+Отфильтровать сущности указанного типа.
+Тип DOMAIN-модели берется из Route, тело запроса - Dto условия фильтрации.
+Поддерживается поиск по полям и вложенным структурам (base, group, parent, range)
+"""
+def filter_entity(entity: str, body):
+    if entity not in storage_manager.domains():
+        return __error(f"Неизвестная доменная сущность {entity}!", 404)
+
+    try:
+        payload = dict(body) if isinstance(body, dict) else {}
+        # Тип DOMAIN-модели задается только в Route
+        payload.pop("entity", None)
+        condition = filter_dto.from_dict(payload)
+        condition.entity = entity
+    except (argument_exception, operation_exception, ValueError, TypeError) as ex:
+        return __error(f"Некорректное условие фильтрации: {ex}", 400)
+
+    if not condition.field or not condition.value:
+        return __error("Условие фильтрации должно содержать field и value!", 400)
+
+    try:
+        items = storage_manager.data[entity]
+        result = filter_prototype(condition).apply(items)
+    except (argument_exception, operation_exception) as ex:
+        return __error(str(ex), 400)
+
+    return [__to_dict(item) for item in result], 200
 
 
 api.add_api("openapi.yaml", validate_responses=False, strict_validation=False)

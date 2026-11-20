@@ -206,7 +206,10 @@ def test_return_receipt_convertor_deserialize_with_items():
     assert actual.brutto == 256
     assert actual.netto == 256
     assert all(isinstance(item, ingredient_model) for item in actual.items)
-    assert actual.items[0].group is loaded[storage_manager.group_key()][0]
+
+    # Ссылка ингредиента на группу разрешена в объект из загруженного набора
+    loaded_groups = {item.unique_code: item for item in loaded[storage_manager.group_key()]}
+    assert actual.items[0].group is loaded_groups[actual.items[0].group.unique_code]
     assert actual.items[0].range is not None
 
 

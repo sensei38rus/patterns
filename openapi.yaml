@@ -8,7 +8,8 @@ info:
     Разделы:
     * **Форматы** - список форматов для построения отчетов;
     * **Отчеты** - получение отчета по доменной сущности в формате по умолчанию;
-    * **Доменные сущности** - CRUD операции над сущностями хранилища.
+    * **Доменные сущности** - CRUD операции над сущностями хранилища;
+    * **Фильтрация** - поиск сущностей по Dto-условию, включая вложенные структуры.
 
     При изменении и удалении доменных сущностей выполняется проверка
     ссылочной целостности: запрещено удалять сущность или менять ее код,
@@ -25,6 +26,8 @@ tags:
     description: Построение отчетов
   - name: entities
     description: CRUD операции с доменными сущностями
+  - name: filter
+    description: Фильтрация доменных сущностей
 
 paths:
 
@@ -146,6 +149,44 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
+
+  /api/entities/{entity}/filter:
+    post:
+      tags: [filter]
+      operationId: main.filter_entity
+      summary: Отфильтровать сущности указанного типа
+      description: |
+        Выполняет поиск доменных сущностей по Dto-условию фильтрации.
+        Тип DOMAIN-модели задается в Route (`entity`), тело запроса
+        содержит условия `field`, `value` и `type` (EQUALS или LIKE).
+
+        Поле `field` может указывать на вложенные структуры через точку:
+        * `name`, `unique_code` - поля самой сущности;
+        * `base.name`, `base.unique_code` - базовая единица измерения;
+        * `group.name`, `group.unique_code` - группа номенклатуры;
+        * `parent.name`, `parent.unique_code` - группа-владелец;
+        * `range.name`, `range.unique_code` - единица измерения.
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Filter"
+      responses:
+        "200":
+          description: Список сущностей, удовлетворяющих условию
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/entities/{entity}/{unique_code}:
     get:
@@ -319,3 +360,36 @@ components:
           description: Описание ошибки
       required:
         - message
+
+    Filter:
+      type: object
+      description: |
+        Dto-условие фильтрации доменных сущностей.
+        Тип сущности задается в Route, в теле - только условия по полям.
+      properties:
+        field:
+          type: string
+          description: |
+            Поле или путь вложенной структуры:
+            name, unique_code, base.name, group.name, parent.name, range.name и т.д.
+          example: base.name
+        value:
+          type: string
+          description: Значение для сравнения
+          example: Грамм
+        type:
+          type: string
+          description: Вариант сравнения
+          enum:
+            - EQUALS
+            - LIKE
+          default: EQUALS
+        entity:
+          type: string
+          description: |
+            Необязательный ключ сущности. Если указан,
+            должен совпадать с типом из Route
+          example: range_model
+      required:
+        - field
+        - value

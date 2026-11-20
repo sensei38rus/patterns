@@ -12,6 +12,9 @@ class group_dto (abstract_dto):
     # Наименование
     __name: str = ""
 
+    # Код группы-владельца
+    __parent_code: str = ""
+
     """
     Код
     """
@@ -35,13 +38,27 @@ class group_dto (abstract_dto):
         self.__name = value.strip()
 
     """
+    Код группы-владельца
+    """
+    @property
+    def parent_code(self) -> str:
+        return self.__parent_code
+
+    @parent_code.setter
+    def parent_code(self, value: str) -> None:
+        self.__parent_code = value.strip()
+
+    """
     Фабричный метод создания DTO из доменной модели
     """
     def from_domain_model(self, source: group_model) -> "group_dto":
         validator.validate(source, group_model)
-        
+
         dto = group_dto()
         dto.unique_code = source.unique_code
         dto.name = source.name
-        
+
+        if source.parent is not None:
+            dto.parent_code = source.parent.unique_code
+
         return dto

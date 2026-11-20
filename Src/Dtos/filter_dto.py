@@ -3,13 +3,16 @@ from Src.Dtos.filter_type_enum import filter_type_enum
 
 """
 Dto для фильтрации данных по доменным сущностям:
-номенклатура, группа, единица измерения, рецепт
+номенклатура, группа, единица измерения, рецепт.
+Поддерживается поиск по полям самой сущности и по вложенным
+структурам: base (базовая единица), group (группа),
+parent (группа-владелец), range (единица измерения)
 """
 class filter_dto:
     # Ключ доменной сущности (коллекции хранилища)
     __entity: str = ""
 
-    # Поле для сравнения
+    # Поле для сравнения (допускается путь вида base.name)
     __field: str = ""
 
     # Значение для сравнения
@@ -26,10 +29,18 @@ class filter_dto:
         "receipt_model",
     }
 
-    # Допустимые поля для сравнения
-    __allowed_fields: set = {
+    # Листовые поля для сравнения
+    __allowed_leaf_fields: set = {
         "name",
         "unique_code",
+    }
+
+    # Ссылочные (вложенные) свойства моделей
+    __allowed_link_fields: set = {
+        "base",
+        "group",
+        "parent",
+        "range",
     }
 
     """
@@ -52,7 +63,8 @@ class filter_dto:
         self.__entity = entity
 
     """
-    Поле для сравнения (наименование или уникальный код)
+    Поле для сравнения: name, unique_code либо путь
+    вложенной структуры (base.name, group.unique_code, parent.name)
     """
     @property
     def field(self) -> str:
@@ -63,11 +75,7 @@ class filter_dto:
         validator.validate(value, str)
 
         field = value.strip()
-        if field not in filter_dto.__allowed_fields:
-            raise argument_exception(
-                f"Недопустимое поле для фильтрации: {field}!"
-            )
-
+        filter_dto.__validate_field_path(field)
         self.__field = field
 
     """
@@ -91,8 +99,37 @@ class filter_dto:
 
     @type.setter
     def type(self, value: filter_type_enum) -> None:
+        if isinstance(value, str):
+            value = filter_dto.__parse_type(value)
+        elif isinstance(value, int) and not isinstance(value, bool):
+            try:
+                value = filter_type_enum(value)
+            except ValueError:
+                raise argument_exception(f"Недопустимый вариант фильтрации: {value}!")
+
         validator.validate(value, filter_type_enum)
         self.__type = value
+
+    """
+    Создать Dto из словаря (тела REST-запроса)
+    """
+    @staticmethod
+    def from_dict(source: dict) -> "filter_dto":
+        if not isinstance(source, dict):
+            raise argument_exception("Ожидается словарь условия фильтрации!")
+
+        dto = filter_dto()
+
+        if source.get("entity"):
+            dto.entity = source["entity"]
+        if source.get("field") is not None:
+            dto.field = source["field"]
+        if source.get("value") is not None:
+            dto.value = source["value"]
+        if source.get("type") is not None:
+            dto.type = source["type"]
+
+        return dto
 
     """
     Создать независимую копию условия фильтрации
@@ -104,3 +141,38 @@ class filter_dto:
         dto.__value = self.__value
         dto.__type = self.__type
         return dto
+
+    """
+    Проверить путь поля: лист или цепочка вложенных ссылок
+    """
+    @staticmethod
+    def __validate_field_path(field: str) -> None:
+        parts = field.split(".")
+
+        if len(parts) < 1 or any(part.strip() == "" for part in parts):
+            raise argument_exception(f"Некорректное поле для фильтрации: {field}!")
+
+        for part in parts[:-1]:
+            if part not in filter_dto.__allowed_link_fields:
+                raise argument_exception(
+                    f"Недопустимое вложенное поле для фильтрации: {part}!"
+                )
+
+        leaf = parts[-1]
+        if leaf not in filter_dto.__allowed_leaf_fields:
+            raise argument_exception(
+                f"Недопустимое поле для фильтрации: {leaf}!"
+            )
+
+    """
+    Разобрать вариант сравнения из строки или кода
+    """
+    @staticmethod
+    def __parse_type(value: str) -> filter_type_enum:
+        text = value.strip().upper()
+
+        for item in filter_type_enum:
+            if text == item.name or text == str(item.value):
+                return item
+
+        raise argument_exception(f"Недопустимый вариант фильтрации: {value}!")

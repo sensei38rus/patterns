@@ -4,14 +4,17 @@ from Src.Dtos.filter_type_enum import filter_type_enum
 
 """
 Сервис фильтрации данных по заданному Dto-условию.
-Работает с доменными моделями и Dto-структурами
+Работает с доменными моделями и Dto-структурами.
+Поддерживается поиск по полям сущности и по вложенным
+структурам (base, group, parent, range) через путь field
 """
 class filter_service:
 
     """
     Отфильтровать список данных по условию.
     Поддерживаются варианты EQUALS (полное совпадение)
-    и LIKE (вхождение строки) для полей name и unique_code
+    и LIKE (вхождение строки) для полей name и unique_code,
+    а также их вложенных представлений (например base.name)
     """
     @staticmethod
     def apply(items: list, condition: filter_dto) -> list:
@@ -23,8 +26,7 @@ class filter_service:
         result = []
 
         for item in items:
-            # Поддерживаются и доменные модели, и Dto-структуры
-            field_value = getattr(item, condition.field, None)
+            field_value = filter_service.__resolve(item, condition.field)
             if field_value is None or not isinstance(field_value, (str, int)):
                 continue
 
@@ -32,6 +34,29 @@ class filter_service:
                 result.append(item)
 
         return result
+
+
+    """
+    Получить значение поля по пути (в том числе вложенному).
+    Возвращает None, если путь не разрешается
+    """
+    @staticmethod
+    def __resolve(item, path: str):
+        if item is None or not isinstance(path, str) or path.strip() == "":
+            return None
+
+        current = item
+        for part in path.split("."):
+            if current is None:
+                return None
+
+            # Коллекции (состав рецепта) не обходятся по пути фильтрации
+            if isinstance(current, (list, tuple, dict)):
+                return None
+
+            current = getattr(current, part, None)
+
+        return current
 
 
     """

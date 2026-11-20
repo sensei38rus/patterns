@@ -330,3 +330,151 @@ def test_fail_api_update_referenced_entity_code():
     # Очистка
     __delete_entity(client, "nomenclature_model", nomenclature["unique_code"])
     __delete_entity(client, "group_model", group["unique_code"])
+
+"""
+Проверить фильтрацию сущностей через POST /api/entities/{entity}/filter.
+На вход Dto условия, тип DOMAIN-модели - в Route
+"""
+def test_success_api_filter_entity_by_name():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/nomenclature_model/filter",
+        json={"field": "name", "value": "Сахар", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["name"] == "Сахар"
+
+"""
+Проверить фильтрацию сущностей по вхождению строки (LIKE)
+"""
+def test_success_api_filter_entity_like_name():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/nomenclature_model/filter",
+        json={"field": "name", "value": "масл", "type": "LIKE"}
+    )
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert any("масл" in item["name"].lower() for item in data)
+
+"""
+Проверить фильтрацию по вложенной структуре base.name (базовая единица)
+"""
+def test_success_api_filter_entity_nested_base_name():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/range_model/filter",
+        json={"field": "base.name", "value": "Грамм", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+
+"""
+Проверить фильтрацию по вложенной группе-владельцу (parent.name)
+"""
+def test_success_api_filter_entity_nested_parent_name():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/group_model/filter",
+        json={"field": "parent.name", "value": "Продукты", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Ингредиенты"
+
+"""
+Проверить фильтрацию с неизвестной сущностью в Route.
+Ожидается: 404
+"""
+def test_fail_api_filter_entity_unknown_entity():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/unknown_model/filter",
+        json={"field": "name", "value": "X", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 404
+
+"""
+Проверить фильтрацию с некорректным условием (нет field/value).
+Ожидается: 400
+"""
+def test_fail_api_filter_entity_invalid_body():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/nomenclature_model/filter",
+        json={"type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 400
+
+"""
+Проверить фильтрацию с недопустимым полем.
+Ожидается: 400
+"""
+def test_fail_api_filter_entity_invalid_field():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/nomenclature_model/filter",
+        json={"field": "address", "value": "X", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 400
+
+"""
+Проверить фильтрацию с пустым результатом.
+Ожидается: 200 и пустой список
+"""
+def test_success_api_filter_entity_empty_result():
+    # Подготовка
+    client = __create_client()
+
+    # Действие
+    response = client.post(
+        "/api/entities/nomenclature_model/filter",
+        json={"field": "name", "value": "Несуществующая позиция", "type": "EQUALS"}
+    )
+
+    # Проверки
+    assert response.status_code == 200
+    assert response.json() == []
