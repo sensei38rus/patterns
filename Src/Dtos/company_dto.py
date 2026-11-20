@@ -13,16 +13,16 @@ class company_dto (abstract_dto):
     __name: str = ""
 
     # ИНН
-    __inn: str = ""
+    __inn: int = 0
 
     # БИК
     __bik: str = ""
 
     # Корреспондентский счет
-    __corr_account: str = ""
+    __corr_account: int = 0
 
     # Банковский счет
-    __account: str = ""
+    __account: int = 0
 
     # Вид собственности
     __ownership: str = ""
@@ -53,12 +53,12 @@ class company_dto (abstract_dto):
     ИНН
     """
     @property
-    def inn(self) -> str:
+    def inn(self) -> int:
         return self.__inn
 
     @inn.setter
-    def inn(self, value: str) -> None:
-        self.__inn = value.strip()
+    def inn(self, value) -> None:
+        self.__inn = int(value)
 
     """
     БИК
@@ -75,23 +75,23 @@ class company_dto (abstract_dto):
     Корреспондентский счет
     """
     @property
-    def corr_account(self) -> str:
+    def corr_account(self) -> int:
         return self.__corr_account
 
     @corr_account.setter
-    def corr_account(self, value: str) -> None:
-        self.__corr_account = value.strip()
+    def corr_account(self, value) -> None:
+        self.__corr_account = int(value)
 
     """
     Банковский счет
     """
     @property
-    def account(self) -> str:
+    def account(self) -> int:
         return self.__account
 
     @account.setter
-    def account(self, value: str) -> None:
-        self.__account = value.strip()
+    def account(self, value) -> None:
+        self.__account = int(value)
 
     """
     Вид собственности
@@ -113,10 +113,10 @@ class company_dto (abstract_dto):
         dto = company_dto()
         dto.unique_code = source.unique_code
         dto.name = source.name
-        dto.inn = str(source.inn)
+        dto.inn = source.inn
         dto.bik = source.bik
-        dto.corr_account = str(source.corr_account)
-        dto.account = str(source.account)
+        dto.corr_account = source.corr_account
+        dto.account = source.account
         dto.ownership = source.ownership
         
         return dto

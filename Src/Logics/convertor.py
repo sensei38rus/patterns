@@ -35,9 +35,11 @@ class convertor:
     """
     Десериализовать Json (строку) или словарь в объект.
     Обход структуры выполняется рекурсивно через фабрику конверторов,
-    после загрузки разрешаются ссылки между моделями по уникальному коду
+    после загрузки разрешаются ссылки между моделями по уникальному коду.
+    Параметр registry позволяет передать заранее известный набор моделей
+    (например, содержимое хранилища), чтобы ссылки разрешались и на них
     """
-    def deserialize(self, source: any ) -> object:
+    def deserialize(self, source: any, registry: dict = None ) -> object:
           # Источник может быть представлен строкой в формате Json
           if isinstance(source, str):
                 try:
@@ -50,6 +52,8 @@ class convertor:
 
           # Контекст: реестр загруженных моделей и отложенные ссылки между ними
           context = domain_convertor.create_context()
+          if registry:
+                context["registry"].update(registry)
 
           convertor = self.__factory.create( source )
           result = convertor.deserialize( source, context )

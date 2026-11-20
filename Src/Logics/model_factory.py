@@ -17,6 +17,8 @@ from Src.Dtos.storage_dto import storage_dto
 from Src.Models.storage_model import storage_model
 from Src.Dtos.company_dto import company_dto
 from Src.Models.company_model import company_model
+from Src.Dtos.settings_dto import settings_dto
+from Src.Models.settings_model import settings_model
 
 """
 Реализация фабрики для создания доменных моделей и Dto по имени типа.
@@ -41,6 +43,7 @@ class model_factory(abstract_model_factory):
             (nomenclature_dto, nomenclature_model),
             (storage_dto, storage_model),
             (company_dto, company_model),
+            (settings_dto, settings_model),
         ]
         for dto_type, model_type in pairs:
             self.register(dto_type, model_type)

@@ -5,6 +5,8 @@ from Src.Core.abstract_model import abstact_model
 from Src.Core.common import common
 
 class markdown_report(abstract_report):
+    # Mime тип результата
+    content_type:str = "text/plain"
 
     """
     Переопределенный метод формирования отчета
@@ -37,6 +39,6 @@ class markdown_report(abstract_report):
                     
         result = report_result_dto()
         result.text = "\n".join(lines) 
-        result.format = "text/plain"
+        result.format = self.content_type
         
         return result

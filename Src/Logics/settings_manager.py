@@ -2,10 +2,10 @@ from Src.Core.abstract_manager import abstract_manager
 from Src.Core.validator import validator, operation_exception
 import json
 import os
+import uuid
 from Src.Models.settings_model import settings_model
 from Src.Models.company_model import company_model
-from Src.Core.common import common
-import pytest
+from Src.Logics.convertor import convertor
 
 """
 Менеджер для работы с настройками
@@ -16,7 +16,7 @@ class settings_manager(abstract_manager):
     # Настройки
     __settings:settings_model = None
     # Загруженные сырые данные
-    __data:list = [] 
+    __data:dict = {} 
     # Информация об ошибке при загрузке
     __inner_error:str = ""
 
@@ -44,7 +44,7 @@ class settings_manager(abstract_manager):
             raise operation_exception(f'Не найден указанный файл {full_file_name}')
 
         try:
-            with open(full_file_name, "r") as file:
+            with open(full_file_name, "r", encoding="utf-8") as file:
                 self.__data = json.load(file)
                 self.is_loaded = self.build()
                 if not self.is_loaded:
@@ -60,32 +60,78 @@ class settings_manager(abstract_manager):
         return self.__settings
 
     """
-    Обработать загруженные данные
+    Обработать загруженные данные.
+    Данные десериализуются общим механизмом (convertor) по тому же
+    принципу, что и доменные сущности хранилища
     """
     def build(self) -> bool:
         if len(self.__data) == 0:
               return False
 
         try: 
-            # Загружаем данные по организации
-            company = company_model()
-            fields = common.get_fields(company, True)
-            for field in fields:
-                key = f"company_{field}"
-                if key  in self.__data.keys():
-                    setattr( company, field, self.__data[key])
-
-            # Загружаем данные по настройкам
-            fields = common.get_fields(self.__settings, True)
-            for field in fields:
-                key = f"{field}"
-                if key in self.__data.keys():
-                    setattr( self.__settings, field, self.__data[key])
-
+            self.__settings = settings_manager.__to_domain_payload(self.__data)
             return True        
         except Exception as ex:
             self.__inner_error = str(ex)
-            return False          
+            raise operation_exception(f"Ошибка десериализации настроек. Детали: {ex}")          
+
+
+    """
+    Привести загруженные данные к доменной модели настроек.
+    Поддерживается формат с маркером типа ({"type": ...}) и плоский формат
+    старого образца, где данные организации вынесены в ключи "company_*".
+    Готовый payload десериализуется общим механизмом (convertor) по тому же
+    принципу, что и доменные сущности хранилища
+    """
+    @staticmethod
+    def __to_domain_payload(data: dict) -> settings_model:
+        if not isinstance(data, dict):
+            raise operation_exception("Настройки должны быть представлены словарем!")
+
+        # Дамп общего механизма сериализации ({"result": {...}})
+        if "type" not in data and isinstance(data.get("result"), dict):
+            data = data["result"]
+
+        # Данные уже описаны в формате доменной модели
+        if "type" in data:
+            payload = dict(data)
+            # Маркер уникального кода обязателен для распознавания доменной модели
+            payload.setdefault("unique_code", uuid.uuid4().hex)
+
+            # Вложенной организации добавляем маркеры доменной модели
+            company = payload.get("company")
+            if isinstance(company, dict):
+                company = dict(company)
+                marker = company_model()
+                company.setdefault("type", marker.type)
+                company.setdefault("unique_code", marker.unique_code)
+                payload["company"] = company
+        else:
+            payload = {
+                "type": settings_model().type,
+                "unique_code": uuid.uuid4().hex
+            }
+
+            company_payload = {}
+            for key, value in data.items():
+                if key.startswith("company_"):
+                    company_payload[ key[ len("company_") : ] ] = value
+                else:
+                    payload[ key ] = value
+
+            # Данные организации преобразуются во вложенную доменную модель
+            if len(company_payload) > 0:
+                company = company_model()
+                company_payload.setdefault("type", company.type)
+                company_payload.setdefault("unique_code", company.unique_code)
+                payload["company"] = company_payload
+
+        # Десериализация построенного payload в доменную модель
+        result = convertor().deserialize(payload)
+        if not isinstance(result, settings_model):
+            raise operation_exception("Некорректный формат настроек: не удалось выполнить десериализацию!")
+
+        return result
 
 
     """
@@ -97,12 +143,12 @@ class settings_manager(abstract_manager):
         company = company_model()
         company.bik = "044525225"
         company.inn = 123456789999
-        company.corr_account = "30101810400000000225"
+        company.corr_account = 30101810400000000225
         company.name = " Сбербанка (Москва)"
-        company.account = "40812810400000000225"
+        company.account = 40812810400000000225
 
         result.company = company
         result.boss_name = "Воловиков Александр Сергеевич"
         result.account_name = "Балахчи Анна Георгиевна"
 
-   
+        return result

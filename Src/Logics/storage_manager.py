@@ -4,9 +4,12 @@ from Src.Models.group_model import group_model
 from Src.Models.storage_model import storage_model
 from Src.Models.nomenclature_model import nomenclature_model
 from Src.Models.settings_model import settings_model
-from Src.Core.validator import validator
+from Src.Core.validator import validator, operation_exception, argument_exception, conflict_exception
 from Src.Models.ingredient_model import ingredient_model
 from Src.Models.receipt_model import receipt_model
+from Src.Core.abstract_model import abstact_model
+from Src.Services.registry_service import registry_service
+from Src.Services.reference_service import reference_service
 
 """
 Реализация менеджера для управления и кеширования доменных сущностей
@@ -17,40 +20,40 @@ class storage_manager(abstract_manager):
     # Текущие настройки
     __settings:settings_model = None
 
-    """
-    Единица измерений
-    """
     @staticmethod
     def range_key():
+        """
+        Единица измерений
+        """
         return "range_model"
     
 
-    """
-    Категория
-    """
     @staticmethod
     def group_key():
+        """
+        Категория
+        """
         return "group_model"
     
-    """
-    Склад
-    """
     @staticmethod
     def storage_key():
+        """
+        Склад
+        """
         return "storage_model"
 
-    """
-    Номенклатура
-    """
     @staticmethod
     def nomenclature_key():
+        """
+        Номенклатура
+        """
         return "nomenclature_model"
 
-    """
-    Рецепты
-    """
     @staticmethod
     def receipt_key():
+        """
+        Рецепты
+        """
         return "receipt_model"
 
 
@@ -92,6 +95,114 @@ class storage_manager(abstract_manager):
     @property
     def data(self):
         return self.__data
+
+
+    """
+    Получить реестр всех хранимых сущностей (код -> модель).
+    Используется при десериализации запросов для разрешения ссылок
+    на существующие сущности
+    """
+    def registry(self) -> dict:
+        return registry_service.build(self.__data)
+
+
+    """
+    Найти сущность по ключу коллекции и уникальному коду.
+    Возвращает None, если сущность не найдена
+    """
+    def find(self, key: str, unique_code: str):
+        self.__check_collection(key)
+        items = self.__data[ key ]
+        return next((item for item in items if item.unique_code == unique_code), None)
+
+
+    """
+    Добавить новую сущность в коллекцию.
+    Проверяется корректность типа и уникальность кода
+    """
+    def add(self, key: str, model: abstact_model) -> None:
+        self.__check_collection(key)
+
+        if not isinstance(model, abstact_model):
+            raise argument_exception("Ожидается доменная модель!")
+        if type(model).__name__ != key:
+            raise argument_exception(f"Ожидается тип сущности {key}, получен {type(model).__name__}!")
+        if self.find(key, model.unique_code) is not None:
+            raise conflict_exception(f"Сущность {key} с кодом {model.unique_code} уже существует!")
+
+        self.__data[ key ].append(model)
+
+
+    """
+    Обновить сущность в коллекции.
+    Изменяются только переданные поля (fields).
+    Код (unique_code) можно менять только если сущность ни с кем не связана
+    """
+    def update(self, key: str, unique_code: str, model: abstact_model, fields: list, new_code: str = None) -> abstact_model:
+        target = self.find(key, unique_code)
+        if target is None:
+            raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
+
+        if not isinstance(model, abstact_model):
+            raise argument_exception("Ожидается доменная модель!")
+
+        # Проверка ссылочной целостности при изменении кода
+        if new_code is not None and new_code != unique_code:
+            references = self.references(target)
+            if len(references) > 0:
+                raise conflict_exception(
+                    f"Запрещено менять код сущности {key}: она связана с другими доменными сущностями!"
+                )
+            if self.find(key, new_code) is not None:
+                raise conflict_exception(f"Код {new_code} уже используется в коллекции {key}!")
+
+        for field in fields:
+            if field == "unique_code":
+                continue
+
+            descriptor = getattr(type(target), field, None)
+            if isinstance(descriptor, property) and descriptor.fset is not None:
+                setattr(target, field, getattr(model, field))
+
+        if new_code is not None:
+            target.unique_code = new_code
+
+        return target
+
+
+    """
+    Удалить сущность из коллекции.
+    Удаление запрещено, если на сущность ссылаются другие доменные сущности
+    """
+    def remove(self, key: str, unique_code: str) -> None:
+        target = self.find(key, unique_code)
+        if target is None:
+            raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
+
+        references = self.references(target)
+        if len(references) > 0:
+            linked = ", ".join([f"{item['entity']}({item['unique_code']})" for item in references])
+            raise conflict_exception(
+                f"Невозможно удалить сущность {key}: на нее ссылаются {linked}!"
+            )
+
+        self.__data[ key ].remove(target)
+
+
+    """
+    Найти все сущности хранилища, которые ссылаются на указанную.
+    Проверяются свойства-модели, списки и вложенные структуры
+    """
+    def references(self, target: abstact_model) -> list:
+        return reference_service.find(self.__data, target)
+
+
+    """
+    Проверить, что ключ коллекции существует
+    """
+    def __check_collection(self, key: str) -> None:
+        if not isinstance(key, str) or key not in self.__data:
+            raise operation_exception(f"Неизвестная доменная сущность {key}!")
 
 
 

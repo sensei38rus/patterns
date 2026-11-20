@@ -8,6 +8,8 @@ from Src.Core.common import common
 Реализация TXT представления отчета по рецепту
 """
 class text_report(abstract_report):
+    # Mime тип результата
+    content_type:str = "text/plain"
 
     """
     Переопределенный метод формирования отчета
@@ -40,7 +42,7 @@ class text_report(abstract_report):
             
         result = report_result_dto()
         result.text = "\n".join(lines) 
-        result.format = "text/plain"
+        result.format = self.content_type
 
         return result
 

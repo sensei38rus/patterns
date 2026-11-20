@@ -1,5 +1,8 @@
 from Src.Logics.settings_manager import settings_manager
+from Src.Logics.convertor import convertor
 from Src.Core.validator import operation_exception
+from Src.Models.settings_model import settings_model
+import pytest
 import time
 from Src.Dtos.report_type_enum import report_type_enum
 
@@ -92,3 +95,56 @@ def test_default_report_type_settings_manager_true():
     
     # Проверки
     assert manager.settings.default_report_type == report_type_enum.CSV
+
+
+"""
+Проверить загрузку данных организации общим механизмом десериализации
+"""
+def test_company_settings_manager_load():
+    # Подготовка
+    manager = settings_manager()
+        
+    # Действие
+    manager.load("./Tst/settings.json")
+    
+    # Проверки
+    assert manager.settings.company is not None
+    assert manager.settings.company.name == "ООО Ромашка"
+    assert manager.settings.company.inn == 4354545
+
+
+"""
+Проверить round-trip настроек через общий механизм
+сериализации / десериализации (convertor)
+"""
+def test_round_trip_settings_manager_convertor():
+    # Подготовка
+    manager = settings_manager()
+    manager.load("./Tst/settings.json")
+    settings = manager.settings
+
+    # Действие
+    restored = convertor().deserialize(convertor().serialize(settings))["result"]
+
+    # Проверки
+    assert isinstance(restored, settings_model)
+    assert restored.boss_name == settings.boss_name
+    assert restored.default_report_type == settings.default_report_type
+    assert restored.first_start == settings.first_start
+    assert restored.company is not None
+    assert restored.company.name == settings.company.name
+    assert restored.company.inn == settings.company.inn
+
+
+"""
+Проверить загрузку настроек из поврежденного файла. Ожидается исключение.
+"""
+def test_raise_operation_exception_settings_manager_load_broken_file(tmp_path):
+    # Подготовка
+    file = tmp_path / "settings.json"
+    file.write_text('{"default_report_type": "не число"}', encoding="utf-8")
+    manager = settings_manager()
+
+    # Действие и проверки
+    with pytest.raises(operation_exception):
+        manager.load(str(file))
