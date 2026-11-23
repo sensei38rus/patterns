@@ -1,15 +1,16 @@
 from Src.Core.validator import validator, argument_exception
 from Src.Dtos.filter_type_enum import filter_type_enum
+from Src.Services.filter_registry import filter_registry
 
 """
-Dto для фильтрации данных по доменным сущностям:
-номенклатура, группа, единица измерения, рецепт.
-Поддерживается поиск по полям самой сущности и по вложенным
-структурам: base (базовая единица), group (группа),
-parent (группа-владелец), range (единица измерения)
+Dto для фильтрации данных по доменным сущностям.
+Содержит только условие: сущность, поле, значение, вариант сравнения.
+Допустимые сущности и поля фильтрации определяются реестром
+схем (filter_registry), а не знаниями внутри Dto:
+изменение доменной модели не требует правки этого класса
 """
 class filter_dto:
-    # Ключ доменной сущности (коллекции хранилища)
+    # Ключ доменной сущности (коллекция хранилища)
     __entity: str = ""
 
     # Поле для сравнения (допускается путь вида base.name)
@@ -20,28 +21,6 @@ class filter_dto:
 
     # Вариант сравнения
     __type: filter_type_enum = filter_type_enum.EQUALS
-
-    # Допустимые ключи доменных сущностей фильтрации
-    __allowed_entities: set = {
-        "nomenclature_model",
-        "group_model",
-        "range_model",
-        "receipt_model",
-    }
-
-    # Листовые поля для сравнения
-    __allowed_leaf_fields: set = {
-        "name",
-        "unique_code",
-    }
-
-    # Ссылочные (вложенные) свойства моделей
-    __allowed_link_fields: set = {
-        "base",
-        "group",
-        "parent",
-        "range",
-    }
 
     """
     Ключ доменной сущности
@@ -55,10 +34,11 @@ class filter_dto:
         validator.validate(value, str)
 
         entity = value.strip()
-        if entity not in filter_dto.__allowed_entities:
-            raise argument_exception(
-                f"Недопустимая доменная сущность для фильтрации: {entity}!"
-            )
+        filter_registry.validate_entity(entity)
+
+        # Поле уже установлено — проверить его заново по схеме новой сущности
+        if self.__field:
+            filter_registry.validate_field(self.__field, entity)
 
         self.__entity = entity
 
@@ -75,7 +55,7 @@ class filter_dto:
         validator.validate(value, str)
 
         field = value.strip()
-        filter_dto.__validate_field_path(field)
+        filter_registry.validate_field(field, self.__entity)
         self.__field = field
 
     """
@@ -141,28 +121,6 @@ class filter_dto:
         dto.__value = self.__value
         dto.__type = self.__type
         return dto
-
-    """
-    Проверить путь поля: лист или цепочка вложенных ссылок
-    """
-    @staticmethod
-    def __validate_field_path(field: str) -> None:
-        parts = field.split(".")
-
-        if len(parts) < 1 or any(part.strip() == "" for part in parts):
-            raise argument_exception(f"Некорректное поле для фильтрации: {field}!")
-
-        for part in parts[:-1]:
-            if part not in filter_dto.__allowed_link_fields:
-                raise argument_exception(
-                    f"Недопустимое вложенное поле для фильтрации: {part}!"
-                )
-
-        leaf = parts[-1]
-        if leaf not in filter_dto.__allowed_leaf_fields:
-            raise argument_exception(
-                f"Недопустимое поле для фильтрации: {leaf}!"
-            )
 
     """
     Разобрать вариант сравнения из строки или кода

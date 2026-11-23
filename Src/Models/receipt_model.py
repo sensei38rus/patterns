@@ -1,5 +1,6 @@
 from Src.Core.validator import validator
 from Src.Core.entity_model import entity_model
+from Src.Core.filter_schema import filter_schema
 from Src.Models.ingredient_model import ingredient_model
 
 """
@@ -19,6 +20,14 @@ class receipt_model(entity_model):
         # Инициализация пустого списка ингредиентов 
         self.__items = []
         super().__init__()
+
+    """
+    Схема фильтрации: только листовые поля базы
+    (состав рецепта не является ссылочным полем фильтрации)
+    """
+    @classmethod
+    def filter_schema(cls) -> filter_schema:
+        return filter_schema.base()
 
     """
     Вес брутто    

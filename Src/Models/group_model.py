@@ -1,4 +1,5 @@
 from Src.Core.entity_model import entity_model
+from Src.Core.filter_schema import filter_schema
 from Src.Core.validator import validator, argument_exception
 
 """
@@ -10,6 +11,15 @@ class group_model(entity_model):
 
     def __init__(self):
        super().__init__()
+
+    """
+    Схема фильтрации: листовые поля базы + ссылка на родительскую группу
+    """
+    @classmethod
+    def filter_schema(cls) -> filter_schema:
+        return filter_schema.base().with_links({
+            "parent": group_model,
+        })
 
     """
     Группа-владелец (родительская группа)

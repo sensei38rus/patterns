@@ -1,4 +1,5 @@
 from Src.Core.entity_model import entity_model
+from Src.Core.filter_schema import filter_schema
 from Src.Models.group_model import group_model
 from Src.Models.range_model import range_model
 from Src.Core.validator import validator
@@ -12,7 +13,17 @@ class nomenclature_model(entity_model):
 
     def __init__(self):
         super().__init__()
-   
+
+    """
+    Схема фильтрации: листовые поля базы + ссылки на группу и единицу измерения
+    """
+    @classmethod
+    def filter_schema(cls) -> filter_schema:
+        return filter_schema.base().with_links({
+            "group": group_model,
+            "range": range_model,
+        })
+
     """
     Группа номенклатуры
     """
