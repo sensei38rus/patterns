@@ -4,7 +4,7 @@ from Src.Logics.report_factory import report_factory
 from Src.Logics.convertor import convertor
 from Src.Logics.model_factory import model_factory
 from Src.Logics.filter_prototype import filter_prototype
-from Src.Logics.osv_prototype import osv_prototype
+from Src.Services.osv_service import osv_service
 from Src.Dtos.filter_dto import filter_dto
 from Src.Core.abstract_model import abstact_model
 from Src.Core.validator import argument_exception, operation_exception, conflict_exception
@@ -279,7 +279,9 @@ def filter_entity(entity: str, body):
 """
 Построить оборотно-сальдовую ведомость (ОСВ) с учетом фильтрации.
 На вход - Dto модели фильтрации (entity, field, value, type).
-Формирование ОСВ выполняется через прототип osv_prototype
+Формирование ОСВ выполняется сервисом osv_service
+(исходные данные менеджера -> начальные остатки ->
+отбор через универсальный filter_prototype -> движения -> DTO)
 """
 def post_osv(body):
     if not isinstance(body, dict) or not body.get("entity"):
@@ -299,8 +301,7 @@ def post_osv(body):
         return __error("Условие фильтрации должно содержать field и value!", 400)
 
     try:
-        items = storage_manager.data[entity]
-        report = osv_prototype(condition).build(items)
+        report = osv_service.build(storage_manager, condition)
     except (argument_exception, operation_exception) as ex:
         return __error(str(ex), 400)
 

@@ -1,83 +1,42 @@
+from datetime import date
 from Src.Core.validator import argument_exception
 from Src.Dtos.filter_dto import filter_dto
 from Src.Dtos.filter_type_enum import filter_type_enum
 from Src.Dtos.osv_dto import osv_dto
 from Src.Dtos.osv_row_dto import osv_row_dto
-from Src.Logics.osv_prototype import osv_prototype
+from Src.Services.osv_service import osv_service
 from Src.Logics.storage_manager import storage_manager
 from Src.Models.settings_model import settings_model
-from Src.Models.receipt_model import receipt_model
 import pytest
 
 #**ОжиданиеРезультата_НаименованиеМетодаКласса_КраткоеОписание**
 
 """
-Проверить создание osv_prototype без условия.
-Условие по умолчанию: пустой filter_dto
+Создать менеджер хранилища с тестовыми данными
 """
-def test_empty_osv_prototype_create():
-    # Подготовка
-
-    # Действие
-    prototype = osv_prototype()
-
-    # Проверки
-    assert prototype.condition is not None
-    assert prototype.condition.entity == ""
-    assert prototype.condition.field == ""
-    assert prototype.condition.value == ""
-
-"""
-Проверить клонирование osv_prototype.
-Копия независима: изменение копии не затрагивает оригинал
-"""
-def test_not_equal_osv_prototype_clone():
-    # Подготовка
-    prototype = osv_prototype().configure(
-        entity="nomenclature_model",
-        field="name",
-        value="Сахар",
-        type=filter_type_enum.EQUALS,
-    )
-
-    # Действие
-    copy = prototype.clone()
-    copy.configure(
-        entity="receipt_model",
-        field="unique_code",
-        value="fff",
-        type=filter_type_enum.LIKE,
-    )
-
-    # Проверки
-    assert copy is not prototype
-    assert copy.condition is not prototype.condition
-    assert prototype.condition.entity == "nomenclature_model"
-    assert prototype.condition.value == "Сахар"
-    assert copy.condition.entity == "receipt_model"
-    assert copy.condition.value == "fff"
+def __create_manager():
+    settings = settings_model()
+    settings.first_start = True
+    manager = storage_manager(settings)
+    manager.build()
+    return manager
 
 """
 Проверить построение ОСВ по номенклатуре с фильтрацией (EQUALS).
 Есть строка и итоги
 """
-def test_not_empty_osv_prototype_build_nomenclature():
+def test_not_empty_osv_service_build_nomenclature():
     # Подготовка
-    settings = settings_model()
-    settings.first_start = True
-    manager = storage_manager(settings)
-    manager.build()
-    items = manager.data[storage_manager.nomenclature_key()]
+    manager = __create_manager()
 
-    prototype = osv_prototype().configure(
-        entity=storage_manager.nomenclature_key(),
-        field="name",
-        value="Сахар",
-        type=filter_type_enum.EQUALS,
-    )
+    condition = filter_dto()
+    condition.entity = storage_manager.nomenclature_key()
+    condition.field = "name"
+    condition.value = "Сахар"
+    condition.type = filter_type_enum.EQUALS
 
     # Действие
-    report = prototype.build(items)
+    report = osv_service.build(manager, condition)
 
     # Проверки
     assert isinstance(report, osv_dto)
@@ -91,23 +50,18 @@ def test_not_empty_osv_prototype_build_nomenclature():
 Проверить построение ОСВ по единицам измерения с фильтрацией вложенного поля.
 Строка и итоги заполнены
 """
-def test_not_empty_osv_prototype_build_nested_range():
+def test_not_empty_osv_service_build_nested_range():
     # Подготовка
-    settings = settings_model()
-    settings.first_start = True
-    manager = storage_manager(settings)
-    manager.build()
-    items = manager.data[storage_manager.range_key()]
+    manager = __create_manager()
 
-    prototype = osv_prototype().configure(
-        entity=storage_manager.range_key(),
-        field="base.name",
-        value="Грамм",
-        type=filter_type_enum.EQUALS,
-    )
+    condition = filter_dto()
+    condition.entity = storage_manager.range_key()
+    condition.field = "base.name"
+    condition.value = "Грамм"
+    condition.type = filter_type_enum.EQUALS
 
     # Действие
-    report = prototype.build(items)
+    report = osv_service.build(manager, condition)
 
     # Проверки
     assert len(report.rows) >= 1
@@ -119,24 +73,19 @@ def test_not_empty_osv_prototype_build_nested_range():
 Проверить построение ОСВ по рецептам.
 Оборот Дт = брутто, Кт = нетто, сальдо на конец = разница
 """
-def test_not_empty_osv_prototype_build_receipt():
+def test_not_empty_osv_service_build_receipt():
     # Подготовка
-    settings = settings_model()
-    settings.first_start = True
-    manager = storage_manager(settings)
-    manager.build()
-    items = manager.data[storage_manager.receipt_key()]
-    expected = items[0]
+    manager = __create_manager()
+    expected = manager.data[storage_manager.receipt_key()][0]
 
-    prototype = osv_prototype().configure(
-        entity=storage_manager.receipt_key(),
-        field="unique_code",
-        value=expected.unique_code,
-        type=filter_type_enum.EQUALS,
-    )
+    condition = filter_dto()
+    condition.entity = storage_manager.receipt_key()
+    condition.field = "unique_code"
+    condition.value = expected.unique_code
+    condition.type = filter_type_enum.EQUALS
 
     # Действие
-    report = prototype.build(items)
+    report = osv_service.build(manager, condition)
 
     # Проверки
     assert len(report.rows) == 1
@@ -153,23 +102,18 @@ def test_not_empty_osv_prototype_build_receipt():
 Проверить построение ОСВ по группам (без оборотов).
 Строки есть, обороты равны нулю
 """
-def test_not_empty_osv_prototype_build_group():
+def test_not_empty_osv_service_build_group():
     # Подготовка
-    settings = settings_model()
-    settings.first_start = True
-    manager = storage_manager(settings)
-    manager.build()
-    items = manager.data[storage_manager.group_key()]
+    manager = __create_manager()
 
-    prototype = osv_prototype().configure(
-        entity=storage_manager.group_key(),
-        field="parent.name",
-        value="Продукты",
-        type=filter_type_enum.EQUALS,
-    )
+    condition = filter_dto()
+    condition.entity = storage_manager.group_key()
+    condition.field = "parent.name"
+    condition.value = "Продукты"
+    condition.type = filter_type_enum.EQUALS
 
     # Действие
-    report = prototype.build(items)
+    report = osv_service.build(manager, condition)
 
     # Проверки
     assert len(report.rows) == 1
@@ -181,29 +125,46 @@ def test_not_empty_osv_prototype_build_group():
 Проверить построение ОСВ с несуществующим значением фильтра.
 Пустая ведомость, итоги нулевые
 """
-def test_empty_osv_prototype_build_not_found():
+def test_empty_osv_service_build_not_found():
     # Подготовка
-    settings = settings_model()
-    settings.first_start = True
-    manager = storage_manager(settings)
-    manager.build()
-    items = manager.data[storage_manager.nomenclature_key()]
+    manager = __create_manager()
 
-    prototype = osv_prototype().configure(
-        entity=storage_manager.nomenclature_key(),
-        field="name",
-        value="Несуществующая позиция",
-        type=filter_type_enum.EQUALS,
-    )
+    condition = filter_dto()
+    condition.entity = storage_manager.nomenclature_key()
+    condition.field = "name"
+    condition.value = "Несуществующая позиция"
+    condition.type = filter_type_enum.EQUALS
 
     # Действие
-    report = prototype.build(items)
+    report = osv_service.build(manager, condition)
 
     # Проверки
     assert len(report.rows) == 0
     assert report.total_opening_debit == 0.0
     assert report.total_turnover_debit == 0.0
     assert report.total_closing_debit == 0.0
+
+"""
+Проверить построение ОСВ с датой начала периода.
+Начальные остатки нулевые (реестр не ведется), итоги корректны
+"""
+def test_not_empty_osv_service_build_with_date_from():
+    # Подготовка
+    manager = __create_manager()
+
+    condition = filter_dto()
+    condition.entity = storage_manager.nomenclature_key()
+    condition.field = "name"
+    condition.value = "Сахар"
+    condition.type = filter_type_enum.EQUALS
+
+    # Действие
+    report = osv_service.build(manager, condition, date_from=date(2026, 1, 1))
+
+    # Проверки
+    assert len(report.rows) == 1
+    assert report.rows[0].opening_debit == 0.0
+    assert report.rows[0].opening_credit == 0.0
 
 """
 Проверить сериализацию ОСВ в словарь.
@@ -236,28 +197,59 @@ def test_not_empty_osv_dto_to_dict():
     assert result["totals"]["closing_debit"] == 10.0
 
 """
-Проверить передачу некорректного условия в конструктор osv_prototype.
+Проверить передачу некорректного менеджера в osv_service.build.
 Есть исключение argument_exception
 """
-def test_raise_osv_prototype_fail_condition():
+def test_raise_osv_service_build_fail_manager():
     # Подготовка
+    condition = filter_dto()
+    condition.entity = "nomenclature_model"
+    condition.field = "name"
+    condition.value = "Сахар"
 
     # Действие и проверка
     with pytest.raises(argument_exception):
-        osv_prototype("не filter_dto")
+        osv_service.build(None, condition)
 
 """
-Проверить передачу некорректного списка в osv_prototype.build.
+Проверить передачу некорректного условия в osv_service.build.
 Есть исключение argument_exception
 """
-def test_raise_osv_prototype_build_fail_items():
+def test_raise_osv_service_build_fail_condition():
     # Подготовка
-    prototype = osv_prototype().configure(
-        entity="nomenclature_model",
-        field="name",
-        value="Сахар",
-    )
+    manager = __create_manager()
 
     # Действие и проверка
     with pytest.raises(argument_exception):
-        prototype.build(None)
+        osv_service.build(manager, "не filter_dto")
+
+"""
+Проверить построение ОСВ без entity в условии.
+Есть исключение argument_exception
+"""
+def test_raise_osv_service_build_fail_empty_entity():
+    # Подготовка
+    manager = __create_manager()
+    condition = filter_dto()
+    condition.field = "name"
+    condition.value = "Сахар"
+
+    # Действие и проверка
+    with pytest.raises(argument_exception):
+        osv_service.build(manager, condition)
+
+"""
+Проверить построение ОСВ с некорректной датой начала периода.
+Есть исключение argument_exception
+"""
+def test_raise_osv_service_build_fail_date_from():
+    # Подготовка
+    manager = __create_manager()
+    condition = filter_dto()
+    condition.entity = storage_manager.nomenclature_key()
+    condition.field = "name"
+    condition.value = "Сахар"
+
+    # Действие и проверка
+    with pytest.raises(argument_exception):
+        osv_service.build(manager, condition, date_from="не дата")
