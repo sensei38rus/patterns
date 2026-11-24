@@ -233,9 +233,14 @@ class storage_manager(abstract_manager):
 
         self.data[ storage_manager.range_key() ] = [range_killogramm.base, range_killogramm, range_item]
 
-        # Группы
+        # Группы: владелец и дочерняя группа
         group = group_model.create_default_group()
-        self.data[ storage_manager.group_key() ] = [group]
+
+        group_owner = group_model()
+        group_owner.name = "Продукты"
+        group.parent = group_owner
+
+        self.data[ storage_manager.group_key() ] = [group_owner, group]
 
         # Склады
         storage = storage_model()

@@ -8,7 +8,9 @@ info:
     Разделы:
     * **Форматы** - список форматов для построения отчетов;
     * **Отчеты** - получение отчета по доменной сущности в формате по умолчанию;
-    * **Доменные сущности** - CRUD операции над сущностями хранилища.
+    * **Доменные сущности** - CRUD операции над сущностями хранилища;
+    * **Фильтрация** - поиск сущностей по Dto-условию, включая вложенные структуры;
+    * **ОСВ** - оборотно-сальдовая ведомость с учетом фильтрации.
 
     При изменении и удалении доменных сущностей выполняется проверка
     ссылочной целостности: запрещено удалять сущность или менять ее код,
@@ -25,6 +27,10 @@ tags:
     description: Построение отчетов
   - name: entities
     description: CRUD операции с доменными сущностями
+  - name: filter
+    description: Фильтрация доменных сущностей
+  - name: osv
+    description: Оборотно-сальдовая ведомость
 
 paths:
 
@@ -147,6 +153,44 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
+  /api/entities/{entity}/filter:
+    post:
+      tags: [filter]
+      operationId: main.filter_entity
+      summary: Отфильтровать сущности указанного типа
+      description: |
+        Выполняет поиск доменных сущностей по Dto-условию фильтрации.
+        Тип DOMAIN-модели задается в Route (`entity`), тело запроса
+        содержит условия `field`, `value` и `type` (EQUALS или LIKE).
+
+        Поле `field` может указывать на вложенные структуры через точку:
+        * `name`, `unique_code` - поля самой сущности;
+        * `base.name`, `base.unique_code` - базовая единица измерения;
+        * `group.name`, `group.unique_code` - группа номенклатуры;
+        * `parent.name`, `parent.unique_code` - группа-владелец;
+        * `range.name`, `range.unique_code` - единица измерения.
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Filter"
+      responses:
+        "200":
+          description: Список сущностей, удовлетворяющих условию
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/entities/{entity}/{unique_code}:
     get:
       tags: [entities]
@@ -211,6 +255,49 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
+
+  /api/osv:
+    post:
+      tags: [osv]
+      operationId: main.post_osv
+      summary: Построить оборотно-сальдовую ведомость с учетом фильтрации
+      description: |
+        На вход передается Dto модели фильтрации:
+        `entity` (тип DOMAIN-модели), `field`, `value` и `type` (EQUALS или LIKE).
+
+        Возвращается оборотно-сальдовая ведомость (ОСВ):
+        строки по отфильтрованным сущностям и итоги.
+
+        Формирование выполняется сервисом `osv_service`:
+        исходные данные менеджера → начальные остатки →
+        отбор строк через универсальный прототип `filter_prototype` →
+        движения (приход/расход) → сборка DTO.
+
+        Показатели строк:
+        * **receipt_model** - приход (Дт) = брутто, расход (Кт) = нетто;
+        * **range_model** - приход (Дт) = коэффициент пересчета;
+        * **nomenclature_model** - приход (Дт) = коэффициент единицы измерения;
+        * **group_model** - обороты отсутствуют.
+
+        Сальдо на конец: конечное = начальное + Дт - Кт
+        (в сторону Дт или Кт).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Filter"
+      responses:
+        "200":
+          description: Оборотно-сальдовая ведомость
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Osv"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
 
@@ -319,3 +406,140 @@ components:
           description: Описание ошибки
       required:
         - message
+
+    Filter:
+      type: object
+      description: |
+        Dto-условие фильтрации доменных сущностей.
+        Тип сущности задается в Route, в теле - только условия по полям.
+      properties:
+        field:
+          type: string
+          description: |
+            Поле или путь вложенной структуры:
+            name, unique_code, base.name, group.name, parent.name, range.name и т.д.
+          example: base.name
+        value:
+          type: string
+          description: Значение для сравнения
+          example: Грамм
+        type:
+          type: string
+          description: Вариант сравнения
+          enum:
+            - EQUALS
+            - LIKE
+          default: EQUALS
+        entity:
+          type: string
+          description: |
+            Необязательный ключ сущности. Если указан,
+            должен совпадать с типом из Route
+          example: range_model
+      required:
+        - field
+        - value
+
+    OsvRow:
+      type: object
+      description: Строка оборотно-сальдовой ведомости
+      properties:
+        entity:
+          type: string
+          description: Тип доменной сущности
+        unique_code:
+          type: string
+          description: Уникальный код сущности
+        name:
+          type: string
+          description: Наименование
+        opening_debit:
+          type: number
+          format: float
+          description: Сальдо на начало, дебет
+        opening_credit:
+          type: number
+          format: float
+          description: Сальдо на начало, кредит
+        turnover_debit:
+          type: number
+          format: float
+          description: Оборот за период, дебет
+        turnover_credit:
+          type: number
+          format: float
+          description: Оборот за период, кредит
+        closing_debit:
+          type: number
+          format: float
+          description: Сальдо на конец, дебет
+        closing_credit:
+          type: number
+          format: float
+          description: Сальдо на конец, кредит
+      required:
+        - entity
+        - unique_code
+        - name
+        - opening_debit
+        - opening_credit
+        - turnover_debit
+        - turnover_credit
+        - closing_debit
+        - closing_credit
+
+    OsvTotals:
+      type: object
+      description: Итоги оборотно-сальдовой ведомости
+      properties:
+        opening_debit:
+          type: number
+          format: float
+          description: Итого сальдо на начало, дебет
+        opening_credit:
+          type: number
+          format: float
+          description: Итого сальдо на начало, кредит
+        turnover_debit:
+          type: number
+          format: float
+          description: Итого оборот, дебет
+        turnover_credit:
+          type: number
+          format: float
+          description: Итого оборот, кредит
+        closing_debit:
+          type: number
+          format: float
+          description: Итого сальдо на конец, дебет
+        closing_credit:
+          type: number
+          format: float
+          description: Итого сальдо на конец, кредит
+      required:
+        - opening_debit
+        - opening_credit
+        - turnover_debit
+        - turnover_credit
+        - closing_debit
+        - closing_credit
+
+    Osv:
+      type: object
+      description: Оборотно-сальдовая ведомость с учетом фильтрации
+      properties:
+        entity:
+          type: string
+          description: Ключ доменной сущности
+          example: receipt_model
+        rows:
+          type: array
+          description: Строки ведомости
+          items:
+            $ref: "#/components/schemas/OsvRow"
+        totals:
+          $ref: "#/components/schemas/OsvTotals"
+      required:
+        - entity
+        - rows
+        - totals

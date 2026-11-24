@@ -11,6 +11,15 @@ class entity_model(abstact_model):
         super().__init__()
 
     """
+    Схема фильтрации сущности.
+    None — сущность не поддерживает фильтрацию (по умолчанию).
+    Фильтруемые модели переопределяют метод и объявляют свои поля
+    """
+    @classmethod
+    def filter_schema(cls):
+        return None
+
+    """
     Наименование
     """
     @property
