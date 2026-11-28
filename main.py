@@ -4,6 +4,9 @@ from Src.Logics.report_factory import report_factory
 from Src.Logics.convertor import convertor
 from Src.Logics.model_factory import model_factory
 from Src.Logics.filter_prototype import filter_prototype
+from Src.Logics.log_publisher import log_publisher
+from Src.Logics.log_observer import log_observer
+from Src.Logics.web_log import web_log
 from Src.Services.osv_service import osv_service
 from Src.Dtos.filter_dto import filter_dto
 from Src.Core.abstract_model import abstact_model
@@ -11,11 +14,18 @@ from Src.Core.validator import argument_exception, operation_exception, conflict
 import connexion
 import uuid
 import os
+import sys
 
 # Необходимо установить pip install "connexion[flask,uvicorn,swagger-ui]"
 # Описание API (Swagger) находится в файле openapi.yaml
 
 api = connexion.FlaskApp(__name__, specification_dir="./")
+
+# Журнал операций (шаблон "Наблюдатель"): наблюдатель подписывается на издатель
+# событий до начала работы приложения, чтобы фиксировать все операции системы
+log_observer = log_observer()
+log_publisher().subscribe(log_observer)
+
 settings_manager = settings_manager()
 settings_manager.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json"))
 
@@ -117,6 +127,7 @@ def __parse_body(body, entity: str):
 """
 Получить отчет в формате по умолчанию
 """
+@web_log
 def get_default_report(entity: str, unique_code: str):
     if entity not in storage_manager.domains():
         return f"Неизвестная доменная сущность {entity}!", 404
@@ -137,6 +148,7 @@ def get_default_report(entity: str, unique_code: str):
 """
 Получить список доменных сущностей
 """
+@web_log
 def get_entities():
     result = [
         {"key": key, "description": description}
@@ -147,6 +159,7 @@ def get_entities():
 """
 Получить список форматов для построения отчетов
 """
+@web_log
 def get_formats():
     factory = report_factory(settings_manager.settings)
     return factory.formats(), 200
@@ -154,6 +167,7 @@ def get_formats():
 """
 Получить список сущностей указанного типа
 """
+@web_log
 def get_entity_list(entity: str):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -164,6 +178,7 @@ def get_entity_list(entity: str):
 """
 Получить сущность по уникальному коду
 """
+@web_log
 def get_entity(entity: str, unique_code: str):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -177,6 +192,7 @@ def get_entity(entity: str, unique_code: str):
 """
 Добавить новую сущность
 """
+@web_log
 def create_entity(entity: str, body):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -201,6 +217,7 @@ def create_entity(entity: str, body):
 """
 Изменить существующую сущность
 """
+@web_log
 def update_entity(entity: str, unique_code: str, body):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -234,6 +251,7 @@ def update_entity(entity: str, unique_code: str, body):
 """
 Удалить сущность
 """
+@web_log
 def delete_entity(entity: str, unique_code: str):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -252,6 +270,7 @@ def delete_entity(entity: str, unique_code: str):
 Тип DOMAIN-модели берется из Route, тело запроса - Dto условия фильтрации.
 Поддерживается поиск по полям и вложенным структурам (base, group, parent, range)
 """
+@web_log
 def filter_entity(entity: str, body):
     if entity not in storage_manager.domains():
         return __error(f"Неизвестная доменная сущность {entity}!", 404)
@@ -274,6 +293,18 @@ def filter_entity(entity: str, body):
     except (argument_exception, operation_exception) as ex:
         return __error(str(ex), 400)
 
+    # Фильтрация складских данных - складская операция
+    if entity in storage_manager.warehouse_keys():
+        log_publisher().warehouse(
+            "filter", entity=entity,
+            message="Фильтрация складских данных",
+            details={
+                "field": condition.field,
+                "value": condition.value,
+                "rows": len(result)
+            }
+        )
+
     return [__to_dict(item) for item in result], 200
 
 """
@@ -283,6 +314,7 @@ def filter_entity(entity: str, body):
 (исходные данные менеджера -> начальные остатки ->
 отбор через универсальный filter_prototype -> движения -> DTO)
 """
+@web_log
 def post_osv(body):
     if not isinstance(body, dict) or not body.get("entity"):
         return __error("Условие фильтрации должно содержать entity!", 400)
@@ -307,6 +339,36 @@ def post_osv(body):
 
     return report.to_dict(), 200
 
+
+"""
+Получить текущие параметры настроек
+"""
+@web_log
+def get_settings():
+    return convertor().serialize(settings_manager.settings)["result"], 200
+
+"""
+Изменить параметры настроек.
+Изменение фиксируется в журнале операций (категория SETTINGS)
+"""
+@web_log
+def put_settings(body):
+    if not isinstance(body, dict) or len(body) == 0:
+        return __error("Тело запроса должно содержать параметры настроек!", 400)
+
+    try:
+        settings_manager.update(body)
+    except (argument_exception, operation_exception) as ex:
+        return __error(str(ex), 400)
+
+    return convertor().serialize(settings_manager.settings)["result"], 200
+
+
+# При запуске скрипта модуль выполняется под именем __main__, при этом
+# swagger разрешает operationId вида "main.get_formats" импортом модуля main.
+# Регистрация текущего модуля под именем main исключает повторное выполнение
+# кода (двойную загрузку настроек и двойную подписку наблюдателя журнала)
+sys.modules.setdefault("main", sys.modules[__name__])
 
 api.add_api("openapi.yaml", validate_responses=False, strict_validation=False)
 

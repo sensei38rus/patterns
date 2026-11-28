@@ -10,6 +10,8 @@ from Src.Models.receipt_model import receipt_model
 from Src.Core.abstract_model import abstact_model
 from Src.Services.registry_service import registry_service
 from Src.Services.reference_service import reference_service
+from Src.Dtos.log_category_enum import log_category_enum
+from Src.Logics.log_publisher import log_publisher
 
 """
 Реализация менеджера для управления и кеширования доменных сущностей
@@ -86,7 +88,21 @@ class storage_manager(abstract_manager):
             result[key_value] = description
             
         return result
-    
+
+
+    @staticmethod
+    def warehouse_keys() -> list:
+        """
+        Ключи коллекций, относящиеся к складскому учету.
+        Операции над этими сущностями логируются как складские
+        (категория WAREHOUSE) и как CRUD операции
+        """
+        return [
+            storage_manager.range_key(),
+            storage_manager.group_key(),
+            storage_manager.storage_key(),
+            storage_manager.nomenclature_key()
+        ]
 
 
     """
@@ -118,75 +134,105 @@ class storage_manager(abstract_manager):
 
     """
     Добавить новую сущность в коллекцию.
-    Проверяется корректность типа и уникальность кода
+    Проверяется корректность типа и уникальность кода.
+    Успешное добавление и ошибка фиксируются в журнале операций
     """
     def add(self, key: str, model: abstact_model) -> None:
-        self.__check_collection(key)
+        unique_code = model.unique_code if isinstance(model, abstact_model) else ""
 
-        if not isinstance(model, abstact_model):
-            raise argument_exception("Ожидается доменная модель!")
-        if type(model).__name__ != key:
-            raise argument_exception(f"Ожидается тип сущности {key}, получен {type(model).__name__}!")
-        if self.find(key, model.unique_code) is not None:
-            raise conflict_exception(f"Сущность {key} с кодом {model.unique_code} уже существует!")
+        try:
+            self.__check_collection(key)
 
-        self.__data[ key ].append(model)
+            if not isinstance(model, abstact_model):
+                raise argument_exception("Ожидается доменная модель!")
+            if type(model).__name__ != key:
+                raise argument_exception(f"Ожидается тип сущности {key}, получен {type(model).__name__}!")
+            if self.find(key, model.unique_code) is not None:
+                raise conflict_exception(f"Сущность {key} с кодом {model.unique_code} уже существует!")
+
+            self.__data[ key ].append(model)
+        except (argument_exception, operation_exception) as ex:
+            self.__log("create", key, unique_code, str(ex), status="error")
+            raise
+
+        self.__log("create", key, unique_code, "Сущность создана", {
+            "name": str(getattr(model, "name", ""))
+        })
 
 
     """
     Обновить сущность в коллекции.
     Изменяются только переданные поля (fields).
-    Код (unique_code) можно менять только если сущность ни с кем не связана
+    Код (unique_code) можно менять только если сущность ни с кем не связана.
+    Успешное изменение и ошибка фиксируются в журнале операций
     """
     def update(self, key: str, unique_code: str, model: abstact_model, fields: list, new_code: str = None) -> abstact_model:
-        target = self.find(key, unique_code)
-        if target is None:
-            raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
+        try:
+            target = self.find(key, unique_code)
+            if target is None:
+                raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
 
-        if not isinstance(model, abstact_model):
-            raise argument_exception("Ожидается доменная модель!")
+            if not isinstance(model, abstact_model):
+                raise argument_exception("Ожидается доменная модель!")
 
-        # Проверка ссылочной целостности при изменении кода
-        if new_code is not None and new_code != unique_code:
-            references = self.references(target)
-            if len(references) > 0:
-                raise conflict_exception(
-                    f"Запрещено менять код сущности {key}: она связана с другими доменными сущностями!"
-                )
-            if self.find(key, new_code) is not None:
-                raise conflict_exception(f"Код {new_code} уже используется в коллекции {key}!")
+            # Проверка ссылочной целостности при изменении кода
+            if new_code is not None and new_code != unique_code:
+                references = self.references(target)
+                if len(references) > 0:
+                    raise conflict_exception(
+                        f"Запрещено менять код сущности {key}: она связана с другими доменными сущностями!"
+                    )
+                if self.find(key, new_code) is not None:
+                    raise conflict_exception(f"Код {new_code} уже используется в коллекции {key}!")
 
-        for field in fields:
-            if field == "unique_code":
-                continue
+            for field in fields:
+                if field == "unique_code":
+                    continue
 
-            descriptor = getattr(type(target), field, None)
-            if isinstance(descriptor, property) and descriptor.fset is not None:
-                setattr(target, field, getattr(model, field))
+                descriptor = getattr(type(target), field, None)
+                if isinstance(descriptor, property) and descriptor.fset is not None:
+                    setattr(target, field, getattr(model, field))
 
-        if new_code is not None:
-            target.unique_code = new_code
+            if new_code is not None:
+                target.unique_code = new_code
+        except (argument_exception, operation_exception) as ex:
+            self.__log("update", key, unique_code, str(ex), status="error")
+            raise
+
+        self.__log("update", key, target.unique_code, "Сущность изменена", {
+            "fields": list(fields) if isinstance(fields, list) else [],
+            "code_changed": new_code is not None and new_code != unique_code
+        })
 
         return target
 
 
     """
     Удалить сущность из коллекции.
-    Удаление запрещено, если на сущность ссылаются другие доменные сущности
+    Удаление запрещено, если на сущность ссылаются другие доменные сущности.
+    Успешное удаление и ошибка фиксируются в журнале операций
     """
     def remove(self, key: str, unique_code: str) -> None:
-        target = self.find(key, unique_code)
-        if target is None:
-            raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
+        try:
+            target = self.find(key, unique_code)
+            if target is None:
+                raise operation_exception(f"Сущность {key} с кодом {unique_code} не найдена!")
 
-        references = self.references(target)
-        if len(references) > 0:
-            linked = ", ".join([f"{item['entity']}({item['unique_code']})" for item in references])
-            raise conflict_exception(
-                f"Невозможно удалить сущность {key}: на нее ссылаются {linked}!"
-            )
+            references = self.references(target)
+            if len(references) > 0:
+                linked = ", ".join([f"{item['entity']}({item['unique_code']})" for item in references])
+                raise conflict_exception(
+                    f"Невозможно удалить сущность {key}: на нее ссылаются {linked}!"
+                )
 
-        self.__data[ key ].remove(target)
+            self.__data[ key ].remove(target)
+        except (argument_exception, operation_exception) as ex:
+            self.__log("delete", key, unique_code, str(ex), status="error")
+            raise
+
+        self.__log("delete", key, unique_code, "Сущность удалена", {
+            "name": str(getattr(target, "name", ""))
+        })
 
 
     """
@@ -195,6 +241,29 @@ class storage_manager(abstract_manager):
     """
     def references(self, target: abstact_model) -> list:
         return reference_service.find(self.__data, target)
+
+
+    """
+    Зафиксировать операцию над данными в журнале.
+    Операции со складскими сущностями относятся к категории WAREHOUSE,
+    остальные - к категории CRUD. Любая операция с данными является CRUD,
+    поэтому категория CRUD добавляется в группы события
+    """
+    def __log(self, operation: str, key: str, unique_code: str, message: str,
+              details: dict = None, status: str = "success") -> None:
+        publisher = log_publisher()
+
+        if key in storage_manager.warehouse_keys():
+            publisher.warehouse(
+                operation, entity=key, unique_code=unique_code,
+                message=message, status=status, details=details,
+                groups=[log_category_enum.CRUD]
+            )
+        else:
+            publisher.crud(
+                operation, entity=key, unique_code=unique_code,
+                message=message, status=status, details=details
+            )
 
 
     """

@@ -10,7 +10,8 @@ info:
     * **Отчеты** - получение отчета по доменной сущности в формате по умолчанию;
     * **Доменные сущности** - CRUD операции над сущностями хранилища;
     * **Фильтрация** - поиск сущностей по Dto-условию, включая вложенные структуры;
-    * **ОСВ** - оборотно-сальдовая ведомость с учетом фильтрации.
+    * **ОСВ** - оборотно-сальдовая ведомость с учетом фильтрации;
+    * **Настройки** - чтение и изменение параметров настроек.
 
     При изменении и удалении доменных сущностей выполняется проверка
     ссылочной целостности: запрещено удалять сущность или менять ее код,
@@ -31,6 +32,8 @@ tags:
     description: Фильтрация доменных сущностей
   - name: osv
     description: Оборотно-сальдовая ведомость
+  - name: settings
+    description: Параметры настроек
 
 paths:
 
@@ -299,6 +302,45 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/settings:
+    get:
+      tags: [settings]
+      operationId: main.get_settings
+      summary: Получить текущие параметры настроек
+      responses:
+        "200":
+          description: Текущие параметры настроек
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    put:
+      tags: [settings]
+      operationId: main.put_settings
+      summary: Изменить параметры настроек
+      description: |
+        Обновляет переданные параметры настроек. Неизвестный параметр
+        или некорректное значение приводят к ошибке 400, при этом
+        частично примененные параметры откатываются к прежним значениям.
+
+        Изменение фиксируется в журнале операций системы
+        (категория SETTINGS), как и все вызовы web методов (категория WEB).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Обновленные параметры настроек
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
 components:
 
   parameters:
@@ -543,3 +585,72 @@ components:
         - entity
         - rows
         - totals
+
+    Settings:
+      type: object
+      description: Параметры настроек системы
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          description: Полное имя типа доменной модели
+        unique_code:
+          type: string
+          description: Уникальный код настроек
+        company:
+          $ref: "#/components/schemas/Company"
+        boss_name:
+          type: string
+          description: Директор
+        account_name:
+          type: string
+          description: Главный бухгалтер
+        first_start:
+          type: boolean
+          description: Флаг первого старта
+        default_report_type:
+          type: integer
+          description: Формат отчетов по умолчанию (код формата)
+
+    SettingsUpdate:
+      type: object
+      description: |
+        Изменяемые параметры настроек.
+        Указываются только изменяемые поля, служебные поля не передаются
+      additionalProperties: true
+      properties:
+        company:
+          $ref: "#/components/schemas/Company"
+        boss_name:
+          type: string
+          description: Директор
+        account_name:
+          type: string
+          description: Главный бухгалтер
+        first_start:
+          type: boolean
+          description: Флаг первого старта
+        default_report_type:
+          type: integer
+          description: Формат отчетов по умолчанию (код формата)
+
+    Company:
+      type: object
+      description: Данные организации
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+          description: Наименование организации
+        inn:
+          type: integer
+          description: ИНН
+        bik:
+          type: string
+          description: БИК
+        account:
+          type: integer
+          description: Расчетный счет
+        corr_account:
+          type: integer
+          description: Корреспондентский счет
