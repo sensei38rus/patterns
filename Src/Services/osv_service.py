@@ -5,6 +5,7 @@ from Src.Dtos.filter_dto import filter_dto
 from Src.Dtos.osv_dto import osv_dto
 from Src.Dtos.osv_row_dto import osv_row_dto
 from Src.Logics.filter_prototype import filter_prototype
+from Src.Logics.log_publisher import log_publisher
 from Src.Models.nomenclature_model import nomenclature_model
 from Src.Models.range_model import range_model
 from Src.Models.receipt_model import receipt_model
@@ -63,6 +64,17 @@ class osv_service:
         for row in rows:
             report.add_row(row)
         report.refresh_totals()
+
+        # Складская операция: расчет остатков и движений фиксируется в журнале
+        log_publisher().warehouse(
+            "osv", entity=entity,
+            message="Построение оборотно-сальдовой ведомости",
+            details={
+                "field": condition.field,
+                "value": condition.value,
+                "rows": len(report.rows)
+            }
+        )
 
         return report
 
